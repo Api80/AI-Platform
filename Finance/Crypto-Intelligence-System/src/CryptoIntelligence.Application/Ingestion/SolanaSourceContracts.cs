@@ -124,7 +124,8 @@ public sealed class SolanaAdapterRawEventHandler(
                 rawEvent.Event.Slot,
                 rawEvent.Event.EventTime,
                 rawEvent.Event.ObservedTime,
-                parsedEvent);
+                parsedEvent,
+                rawEvent.Event.CanonicalStatus);
             foreach (var handler in projectionHandlers)
             {
                 await handler.HandleAsync(projectionEvent, cancellationToken);

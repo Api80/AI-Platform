@@ -28,6 +28,9 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<
             IIntelligenceAssessmentStore,
             PostgresIntelligenceAssessmentStore>();
+        services.AddScoped<
+            IAutomatedAssessmentContextSource,
+            PostgresAutomatedAssessmentContextSource>();
         return services;
     }
 }

@@ -97,6 +97,39 @@ public sealed class RaydiumAdapterTests
         Assert.Throws<UnsupportedProgramVersionException>(() => adapter.Parse(json));
     }
 
+    [Fact]
+    public void Cpmm_swap_exposes_same_slot_vault_and_fee_evidence()
+    {
+        var fixtureRoot = Path.Combine(
+            FindProjectRoot(),
+            "samples",
+            "adapter-spike",
+            "raydium-launchlab-cpmm");
+        var adapter = CreateAdapter(fixtureRoot);
+        var result = adapter.Parse(File.ReadAllText(Path.Combine(
+            fixtureRoot,
+            "raw",
+            "cpmm-swap-base-input.json")));
+        var swap = Assert.Single(result.Events, value =>
+            value.ProgramId ==
+            RaydiumCpmmSellQuoteEvidenceSource.CpmmProgramId &&
+            value.DomainEventType == "SwapObserved");
+
+        Assert.NotNull(swap.Attributes);
+        Assert.True(ulong.Parse(swap.Attributes["input_vault_before"]) > 0);
+        Assert.True(ulong.Parse(swap.Attributes["output_vault_before"]) > 0);
+        Assert.True(ulong.Parse(swap.Attributes["input_amount"]) > 0);
+        Assert.Equal(
+            RaydiumCpmmSellQuoteEvidenceSource.ClassicTokenProgramId,
+            swap.Attributes["input_token_program_id"]);
+        Assert.Equal(
+            RaydiumCpmmSellQuoteEvidenceSource.ClassicTokenProgramId,
+            swap.Attributes["output_token_program_id"]);
+        Assert.Equal("True", swap.Attributes["fee_evidence_supported"]);
+        Assert.Equal("25", swap.Attributes["trading_fee_bps"]);
+        Assert.Equal("0", swap.Attributes["creator_fee_bps"]);
+    }
+
     private static RaydiumTransactionAdapter CreateAdapter(string fixtureRoot) => new(
         "raydium-launchlab-cpmm-v1",
         File.ReadAllText(Path.Combine(fixtureRoot, "idl", "raydium_launchpad.json")),

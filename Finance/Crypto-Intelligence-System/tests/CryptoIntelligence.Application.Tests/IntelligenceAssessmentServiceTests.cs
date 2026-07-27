@@ -86,6 +86,7 @@ public sealed class IntelligenceAssessmentServiceTests
         public Task<StoredIntelligenceEvaluation> SaveAsync(
             string tokenAddress,
             IntelligenceEvaluationResult evaluation,
+            RiskEvidenceSnapshot evidence,
             CancellationToken cancellationToken)
         {
             TokenAddress = tokenAddress;

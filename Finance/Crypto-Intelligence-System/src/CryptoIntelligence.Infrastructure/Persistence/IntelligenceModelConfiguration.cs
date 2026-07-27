@@ -55,6 +55,8 @@ internal static class IntelligenceModelConfiguration
             .HasColumnType("jsonb");
         entity.Property(value => value.Reasons)
             .HasColumnType("jsonb");
+        entity.Property(value => value.Evidence)
+            .HasColumnType("jsonb");
         entity.Property(value => value.RiskModelVersion)
             .HasMaxLength(100);
         entity.Property(value => value.InputAsOfTime)

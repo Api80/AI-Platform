@@ -31,6 +31,10 @@ public sealed class LiquidityPoolEntity
     public DateTimeOffset CreatedTime { get; set; }
     public decimal BaseReserve { get; set; }
     public decimal QuoteReserve { get; set; }
+    public string? CreatorAddress { get; set; }
+    public string? AmmConfigAddress { get; set; }
+    public string? BaseTokenProgramId { get; set; }
+    public string? QuoteTokenProgramId { get; set; }
     public PoolLifecycleStatus LifecycleStatus { get; set; }
     public DateTimeOffset FirstObservedTime { get; set; }
     public DateTimeOffset UpdatedTime { get; set; }
@@ -158,6 +162,7 @@ public sealed class RiskAssessmentEntity
     public bool HardReject { get; set; }
     public required string RuleResults { get; set; }
     public required string Reasons { get; set; }
+    public string? Evidence { get; set; }
     public DateTimeOffset InputAsOfTime { get; set; }
     public required string RiskModelVersion { get; set; }
     public DateTimeOffset CreatedTime { get; set; }

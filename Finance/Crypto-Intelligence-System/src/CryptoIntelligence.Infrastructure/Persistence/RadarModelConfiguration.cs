@@ -48,6 +48,10 @@ internal static class RadarModelConfiguration
         entity.Property(value => value.PoolAddress).HasMaxLength(64);
         entity.Property(value => value.Dex).HasMaxLength(50);
         entity.Property(value => value.ProgramId).HasMaxLength(64);
+        entity.Property(value => value.CreatorAddress).HasMaxLength(64);
+        entity.Property(value => value.AmmConfigAddress).HasMaxLength(64);
+        entity.Property(value => value.BaseTokenProgramId).HasMaxLength(64);
+        entity.Property(value => value.QuoteTokenProgramId).HasMaxLength(64);
         entity.Property(value => value.BaseReserve).HasPrecision(38, 0);
         entity.Property(value => value.QuoteReserve).HasPrecision(38, 0);
         entity.Property(value => value.LifecycleStatus).HasConversion<string>().HasMaxLength(32);

@@ -1,5 +1,6 @@
 using CryptoIntelligence.Application.Intelligence;
 using CryptoIntelligence.Application.Radar;
+using CryptoIntelligence.Domain.Ingestion;
 using CryptoIntelligence.Domain.Intelligence;
 using CryptoIntelligence.Domain.Radar;
 using CryptoIntelligence.Infrastructure.Persistence;
@@ -10,6 +11,164 @@ namespace CryptoIntelligence.Infrastructure.Tests;
 
 public sealed class PostgresIntelligenceAssessmentStoreTests
 {
+    [Fact]
+    [Trait("Category", "Postgres")]
+    public async Task Finality_promotion_requeues_completed_transaction_once()
+    {
+        var connectionString =
+            Environment.GetEnvironmentVariable("CRYPTO_TEST_DB_CONNECTION");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<CryptoIntelligenceDbContext>()
+            .UseNpgsql(connectionString)
+            .Options;
+        await using var context = new CryptoIntelligenceDbContext(options);
+        await using var transaction =
+            await context.Database.BeginTransactionAsync();
+        var now = DateTimeOffset.Parse("2026-07-28T00:01:00Z");
+        var raw = new RawBlockchainEventEntity
+        {
+            Id = Guid.NewGuid(),
+            EventId = Guid.NewGuid().ToString("N"),
+            Chain = "Solana",
+            Network = "mainnet-beta",
+            Slot = 123,
+            TransactionSignature = $"signature-{Guid.NewGuid():N}",
+            InstructionIndex = -1,
+            ProgramId = "program",
+            EventType = "SolanaTransaction",
+            EventOrdinal = 0,
+            EventTime = now,
+            ObservedTime = now,
+            CommitmentLevel = "confirmed",
+            CanonicalStatus = CanonicalStatus.Confirmed,
+            FinalityUpdatedTime = now,
+            Source = "test",
+            RawPayload = "{}",
+            SchemaVersion = "solana-transaction-v1",
+            ProcessingStatus = ProcessingStatus.Completed,
+            CreatedTime = now,
+            UpdatedTime = now
+        };
+        context.RawBlockchainEvents.Add(raw);
+        await context.SaveChangesAsync();
+        var store = new PostgresIngestionReconciliationStore(context);
+
+        await store.PromoteSignatureToFinalizedAsync(
+            raw.TransactionSignature,
+            now.AddMinutes(1),
+            CancellationToken.None);
+
+        Assert.Equal(CanonicalStatus.Finalized, raw.CanonicalStatus);
+        Assert.Equal(ProcessingStatus.Pending, raw.ProcessingStatus);
+        await transaction.RollbackAsync();
+    }
+
+    [Fact]
+    [Trait("Category", "Postgres")]
+    public async Task Automated_context_requires_pool_candidate_and_reconciled_slot()
+    {
+        var connectionString =
+            Environment.GetEnvironmentVariable("CRYPTO_TEST_DB_CONNECTION");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<CryptoIntelligenceDbContext>()
+            .UseNpgsql(connectionString)
+            .Options;
+        await using var context = new CryptoIntelligenceDbContext(options);
+        await using var transaction =
+            await context.Database.BeginTransactionAsync();
+        var now = DateTimeOffset.Parse("2026-07-28T00:01:00Z");
+        var baseToken = Token($"base-{Guid.NewGuid():N}", now);
+        var quoteToken = Token($"quote-{Guid.NewGuid():N}", now);
+        var candidate = new TokenCandidateEntity
+        {
+            Id = Guid.NewGuid(),
+            TokenId = baseToken.Id,
+            Status = CandidateStatus.Observing,
+            DiscoveredAt = now.AddMinutes(-1),
+            UpdatedAt = now
+        };
+        var programId =
+            "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C";
+        var pool = new LiquidityPoolEntity
+        {
+            Id = Guid.NewGuid(),
+            Chain = "Solana",
+            Network = "mainnet-beta",
+            PoolAddress = $"pool-{Guid.NewGuid():N}",
+            Dex = "Raydium",
+            ProgramId = programId,
+            BaseTokenId = baseToken.Id,
+            QuoteTokenId = quoteToken.Id,
+            CreatedSlot = 123,
+            CreatedTime = now,
+            BaseReserve = 100_000,
+            QuoteReserve = 200_000,
+            CreatorAddress = "creator",
+            AmmConfigAddress = "config",
+            LifecycleStatus = PoolLifecycleStatus.Active,
+            FirstObservedTime = now,
+            UpdatedTime = now
+        };
+        var checkpoint = new IngestionCheckpointEntity
+        {
+            Id = Guid.NewGuid(),
+            Chain = "Solana",
+            Network = "mainnet-beta",
+            Source = "test",
+            SubscriptionType = programId,
+            ObservedThroughSlot = 123,
+            PersistedThroughSlot = 123,
+            ProcessedThroughSlot = 123,
+            FinalizedThroughSlot = 123,
+            ReconciledThroughSlot = 123,
+            Status = "Healthy",
+            UpdatedTime = now
+        };
+        var slot = new IngestionSlotStateEntity
+        {
+            Id = Guid.NewGuid(),
+            CheckpointId = checkpoint.Id,
+            Slot = 123,
+            Observed = true,
+            Persisted = true,
+            Processed = true,
+            Finalized = true,
+            Reconciled = true,
+            HasGap = false,
+            UpdatedTime = now
+        };
+        context.AddRange(
+            baseToken,
+            quoteToken,
+            candidate,
+            pool,
+            checkpoint,
+            slot);
+        await context.SaveChangesAsync();
+
+        var source = new PostgresAutomatedAssessmentContextSource(context);
+        var result = await source.LoadAsync(
+            pool.PoolAddress,
+            programId,
+            123,
+            CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(baseToken.MintAddress, result.TokenAddress);
+        Assert.Equal(quoteToken.MintAddress, result.QuoteMint);
+        Assert.Equal("creator", result.CreatorAddress);
+        Assert.True(result.IsReconciled);
+        await transaction.RollbackAsync();
+    }
+
     [Fact]
     [Trait("Category", "Postgres")]
     public async Task Save_is_idempotent_and_radar_returns_latest_explanation()
@@ -60,10 +219,12 @@ public sealed class PostgresIntelligenceAssessmentStoreTests
         var first = await store.SaveAsync(
             mint,
             evaluation,
+            Evidence(now),
             CancellationToken.None);
         var repeated = await store.SaveAsync(
             mint,
             evaluation,
+            Evidence(now),
             CancellationToken.None);
 
         Assert.True(first.ThemeCreated);
@@ -97,7 +258,11 @@ public sealed class PostgresIntelligenceAssessmentStoreTests
             Risk = evaluation.Risk with { OverallScore = 10 }
         };
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            store.SaveAsync(mint, conflicting, CancellationToken.None));
+            store.SaveAsync(
+                mint,
+                conflicting,
+                Evidence(now),
+                CancellationToken.None));
 
         var conflictingCandidate = evaluation with
         {
@@ -110,6 +275,7 @@ public sealed class PostgresIntelligenceAssessmentStoreTests
             store.SaveAsync(
                 mint,
                 conflictingCandidate,
+                Evidence(now),
                 CancellationToken.None));
 
         await transaction.RollbackAsync();
@@ -146,4 +312,42 @@ public sealed class PostgresIntelligenceAssessmentStoreTests
             CandidateEligibilityStatus.Eligible,
             ["Candidate passed theme and risk evaluation."],
             asOfTime));
+
+    private static RiskEvidenceSnapshot Evidence(DateTimeOffset asOfTime) => new(
+        asOfTime,
+        asOfTime,
+        QuoteReserveRaw: 10_000,
+        EntryPriceImpactBasisPoints: 100,
+        LiquidityDropBasisPoints: null,
+        MintAuthorityEnabled: false,
+        FreezeAuthorityEnabled: false,
+        AdapterAuthorityRisk: false,
+        CreatorHoldingBasisPoints: null,
+        Top10HoldingBasisPoints: null,
+        PoolVersionSupported: true,
+        IsFinalized: true,
+        IsReconciled: true,
+        new SellQuoteEvidence(
+            SellQuoteStatus.Available,
+            100,
+            10,
+            100,
+            asOfTime,
+            "adapter-v1",
+            null));
+
+    private static TokenEntity Token(
+        string mint,
+        DateTimeOffset now) => new()
+        {
+            Id = Guid.NewGuid(),
+            Chain = "Solana",
+            Network = "mainnet-beta",
+            MintAddress = mint,
+            LifecycleStatus = TokenLifecycleStatus.Trading,
+            CreatedSlot = 123,
+            CreatedTime = now,
+            FirstObservedTime = now,
+            UpdatedTime = now
+        };
 }

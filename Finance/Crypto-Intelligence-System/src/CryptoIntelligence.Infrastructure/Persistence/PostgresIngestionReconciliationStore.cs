@@ -190,11 +190,22 @@ public sealed class PostgresIngestionReconciliationStore(
             .ToListAsync(cancellationToken);
         foreach (var value in events)
         {
+            var needsFinalizedReplay =
+                value.CanonicalStatus != CanonicalStatus.Finalized &&
+                value.ProcessingStatus == ProcessingStatus.Completed;
             value.CanonicalStatus = CanonicalStatus.Finalized;
             value.CommitmentLevel = "finalized";
             value.FinalizedTime ??= finalizedAt;
             value.FinalityUpdatedTime = finalizedAt;
             value.UpdatedTime = finalizedAt;
+            if (needsFinalizedReplay)
+            {
+                value.ProcessingStatus = ProcessingStatus.Pending;
+                value.RetryCount = 0;
+                value.FirstFailureTime = null;
+                value.LastFailureTime = null;
+                value.LastError = null;
+            }
         }
 
         await context.SaveChangesAsync(cancellationToken);

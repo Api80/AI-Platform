@@ -1,6 +1,7 @@
 using System.Globalization;
 using CryptoIntelligence.Application.Configuration;
 using CryptoIntelligence.Application.Ingestion;
+using CryptoIntelligence.Domain.Ingestion;
 using CryptoIntelligence.Domain.Radar;
 
 namespace CryptoIntelligence.Application.Radar;
@@ -10,7 +11,8 @@ public sealed record ProjectionEvent(
     ulong Slot,
     DateTimeOffset EventTime,
     DateTimeOffset ObservedTime,
-    ParsedAdapterEvent Event);
+    ParsedAdapterEvent Event,
+    CanonicalStatus CanonicalStatus = CanonicalStatus.Observed);
 
 public sealed record TokenProjection(
     string Chain,
@@ -35,7 +37,11 @@ public sealed record PoolProjection(
     DateTimeOffset CreatedTime,
     decimal BaseReserve,
     decimal QuoteReserve,
-    PoolLifecycleStatus Status);
+    PoolLifecycleStatus Status,
+    string? CreatorAddress = null,
+    string? AmmConfigAddress = null,
+    string? BaseTokenProgramId = null,
+    string? QuoteTokenProgramId = null);
 
 public sealed record SwapProjection(
     Guid RawEventId,
@@ -211,7 +217,11 @@ public sealed class RadarProjectionHandler(
                 quoteReserve,
                 baseReserve > 0 && quoteReserve > 0
                     ? PoolLifecycleStatus.Active
-                    : PoolLifecycleStatus.Discovered),
+                    : PoolLifecycleStatus.Discovered,
+                attributes.GetValueOrDefault("creator_address"),
+                attributes.GetValueOrDefault("amm_config_address"),
+                attributes.GetValueOrDefault("base_token_program_id"),
+                attributes.GetValueOrDefault("quote_token_program_id")),
             cancellationToken);
 
         var candidate = await EnsureCandidateAsync(

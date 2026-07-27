@@ -107,6 +107,32 @@ public sealed class ConfigurationTests
             error => error.Path == "storage.partitionAheadMonths");
     }
 
+    [Fact]
+    public void Invalid_sell_quote_probe_size_is_rejected()
+    {
+        var original = ValidConfiguration();
+        var configuration = new MvpConfiguration
+        {
+            ConfigurationVersion = original.ConfigurationVersion,
+            Source = original.Source,
+            Radar = original.Radar,
+            Storage = original.Storage,
+            Theme = original.Theme,
+            Risk = new RiskConfiguration
+            {
+                ModelVersion = original.Risk.ModelVersion,
+                SellQuoteProbeReserveBasisPoints = 0
+            }
+        };
+
+        var errors = MvpConfigurationValidator.Validate(configuration);
+
+        Assert.Contains(
+            errors,
+            error =>
+                error.Path == "risk.sellQuoteProbeReserveBasisPoints");
+    }
+
     private static MvpConfiguration ValidConfiguration() => new()
     {
         ConfigurationVersion = "phase1-mvp-research-v1",
