@@ -1,3 +1,4 @@
+using CryptoIntelligence.Domain.Intelligence;
 using CryptoIntelligence.Domain.Radar;
 
 namespace CryptoIntelligence.Application.Radar;
@@ -12,7 +13,9 @@ public sealed record RadarCandidateReadModel(
     string? Reason,
     int PoolCount,
     string? QuoteTokenAddress,
-    string? LatestFeaturesJson);
+    string? LatestFeaturesJson,
+    ThemeMatchResult? LatestTheme,
+    RiskAssessment? LatestRisk);
 
 public interface IRadarQueryService
 {

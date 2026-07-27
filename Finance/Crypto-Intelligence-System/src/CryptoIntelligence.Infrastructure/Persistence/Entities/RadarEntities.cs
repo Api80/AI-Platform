@@ -113,6 +113,9 @@ public sealed class TokenCandidateEntity
     public DateTimeOffset DiscoveredAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public string? Reason { get; set; }
+    public Guid? LatestThemeMatchId { get; set; }
+    public Guid? LatestRiskAssessmentId { get; set; }
+    public DateTimeOffset? LatestEvaluationAsOfTime { get; set; }
 }
 
 public sealed class FeatureSnapshotEntity
@@ -128,4 +131,34 @@ public sealed class FeatureSnapshotEntity
     public long SourceFromSlot { get; set; }
     public long SourceToSlot { get; set; }
     public int SourceEventCount { get; set; }
+}
+
+public sealed class ThemeMatchEntity
+{
+    public Guid Id { get; set; }
+    public Guid TokenId { get; set; }
+    public bool Matched { get; set; }
+    public bool Blocked { get; set; }
+    public bool ConfigurationValid { get; set; }
+    public int ThemeScore { get; set; }
+    public required string MatchedThemes { get; set; }
+    public required string MatchReasons { get; set; }
+    public DateTimeOffset InputAsOfTime { get; set; }
+    public required string ConfigurationVersion { get; set; }
+    public DateTimeOffset CreatedTime { get; set; }
+}
+
+public sealed class RiskAssessmentEntity
+{
+    public Guid Id { get; set; }
+    public Guid TokenId { get; set; }
+    public Guid? FeatureSnapshotId { get; set; }
+    public int OverallScore { get; set; }
+    public CryptoIntelligence.Domain.Intelligence.RiskLevel RiskLevel { get; set; }
+    public bool HardReject { get; set; }
+    public required string RuleResults { get; set; }
+    public required string Reasons { get; set; }
+    public DateTimeOffset InputAsOfTime { get; set; }
+    public required string RiskModelVersion { get; set; }
+    public DateTimeOffset CreatedTime { get; set; }
 }

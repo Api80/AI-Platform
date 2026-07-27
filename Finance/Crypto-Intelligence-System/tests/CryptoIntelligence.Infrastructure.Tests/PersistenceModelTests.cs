@@ -87,6 +87,8 @@ public sealed class PersistenceModelTests
         Assert.Contains("market_snapshots", script, StringComparison.Ordinal);
         Assert.Contains("token_candidates", script, StringComparison.Ordinal);
         Assert.Contains("feature_snapshots", script, StringComparison.Ordinal);
+        Assert.Contains("theme_matches", script, StringComparison.Ordinal);
+        Assert.Contains("risk_assessments", script, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -102,13 +104,36 @@ public sealed class PersistenceModelTests
             "liquidity_events",
             "market_snapshots",
             "token_candidates",
-            "feature_snapshots"
+            "feature_snapshots",
+            "theme_matches",
+            "risk_assessments"
         ];
 
         var actual = context.Model.GetEntityTypes()
             .Select(value => value.GetTableName())
             .ToHashSet(StringComparer.Ordinal);
         Assert.All(tables, table => Assert.Contains(table, actual));
+    }
+
+    [Fact]
+    public void Model_enforces_versioned_theme_and_risk_idempotency()
+    {
+        using var context = CreateContext();
+        var theme = context.Model.FindEntityType(
+            "CryptoIntelligence.Infrastructure.Persistence.Entities.ThemeMatchEntity");
+        var risk = context.Model.FindEntityType(
+            "CryptoIntelligence.Infrastructure.Persistence.Entities.RiskAssessmentEntity");
+
+        Assert.Contains(
+            theme!.GetIndexes(),
+            index => index.IsUnique &&
+                     index.GetDatabaseName() ==
+                     "ux_theme_matches_token_version_time");
+        Assert.Contains(
+            risk!.GetIndexes(),
+            index => index.IsUnique &&
+                     index.GetDatabaseName() ==
+                     "ux_risk_assessments_token_version_time");
     }
 
     private static CryptoIntelligenceDbContext CreateContext()

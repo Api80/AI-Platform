@@ -16,7 +16,6 @@ internal static class RadarModelConfiguration
         ConfigureMarketSnapshots(modelBuilder);
         ConfigureCandidates(modelBuilder);
         ConfigureFeatures(modelBuilder);
-        ApplySnakeCaseColumns(modelBuilder);
     }
 
     private static void ConfigureTokens(ModelBuilder modelBuilder)
@@ -200,7 +199,7 @@ internal static class RadarModelConfiguration
         }
     }
 
-    private static void ApplySnakeCaseColumns(ModelBuilder modelBuilder)
+    public static void ApplySnakeCaseColumns(this ModelBuilder modelBuilder)
     {
         foreach (var entity in modelBuilder.Model.GetEntityTypes())
         {
