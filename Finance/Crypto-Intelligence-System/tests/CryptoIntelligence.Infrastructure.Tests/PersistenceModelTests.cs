@@ -37,6 +37,43 @@ public sealed class PersistenceModelTests
         Assert.Contains("CREATE TABLE", script, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Model_contains_reliable_ingestion_tables_and_unique_event_identity()
+    {
+        using var context = CreateContext();
+        var rawEvent = context.Model.FindEntityType(
+            "CryptoIntelligence.Infrastructure.Persistence.Entities.RawBlockchainEventEntity");
+        var checkpoint = context.Model.FindEntityType(
+            "CryptoIntelligence.Infrastructure.Persistence.Entities.IngestionCheckpointEntity");
+        var slotState = context.Model.FindEntityType(
+            "CryptoIntelligence.Infrastructure.Persistence.Entities.IngestionSlotStateEntity");
+
+        Assert.Equal("raw_blockchain_events", rawEvent?.GetTableName());
+        Assert.Equal("ingestion_checkpoints", checkpoint?.GetTableName());
+        Assert.Equal("ingestion_slot_states", slotState?.GetTableName());
+        Assert.Contains(
+            rawEvent!.GetIndexes(),
+            index => index.IsUnique &&
+                     index.Properties.Single().Name == "EventId");
+    }
+
+    [Fact]
+    public void Latest_migration_script_contains_ingestion_schema()
+    {
+        using var context = CreateContext();
+        var migrator = context.GetService<IMigrator>();
+
+        var script = migrator.GenerateScript(
+            fromMigration: null,
+            toMigration: null,
+            MigrationsSqlGenerationOptions.Idempotent);
+
+        Assert.Contains("raw_blockchain_events", script, StringComparison.Ordinal);
+        Assert.Contains("ingestion_checkpoints", script, StringComparison.Ordinal);
+        Assert.Contains("ingestion_slot_states", script, StringComparison.Ordinal);
+        Assert.Contains("ux_raw_events_event_id", script, StringComparison.Ordinal);
+    }
+
     private static CryptoIntelligenceDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<CryptoIntelligenceDbContext>()
