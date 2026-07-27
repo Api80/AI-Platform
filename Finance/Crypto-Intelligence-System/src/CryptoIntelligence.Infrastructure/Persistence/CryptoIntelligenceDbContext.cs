@@ -30,6 +30,9 @@ public sealed class CryptoIntelligenceDbContext(
     public DbSet<MarketSnapshotEntity> MarketSnapshots => Set<MarketSnapshotEntity>();
     public DbSet<TokenCandidateEntity> TokenCandidates => Set<TokenCandidateEntity>();
     public DbSet<FeatureSnapshotEntity> FeatureSnapshots => Set<FeatureSnapshotEntity>();
+    public DbSet<ThemeMatchEntity> ThemeMatches => Set<ThemeMatchEntity>();
+    public DbSet<RiskAssessmentEntity> RiskAssessments =>
+        Set<RiskAssessmentEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -68,5 +71,7 @@ public sealed class CryptoIntelligenceDbContext(
 
         modelBuilder.ConfigureIngestion();
         modelBuilder.ConfigureRadar();
+        modelBuilder.ConfigureIntelligence();
+        modelBuilder.ApplySnakeCaseColumns();
     }
 }

@@ -18,6 +18,7 @@ MvpConfigurationValidator.ThrowIfInvalid(mvpConfiguration);
 var snapshot = ConfigurationSnapshotFactory.Create(mvpConfiguration!, DateTimeOffset.UtcNow);
 builder.Services.AddSingleton(mvpConfiguration!);
 builder.Services.AddSingleton(snapshot);
+builder.Services.AddSingleton<IntelligenceEvaluationService>();
 builder.Services.AddSingleton<ISolanaTransactionAdapter>(
     RaydiumTransactionAdapter.CreatePinned(
         mvpConfiguration!.Source.AdapterVersion));
@@ -37,6 +38,7 @@ builder.Services.AddScoped<IRawEventHandler, SolanaAdapterRawEventHandler>();
 builder.Services.AddScoped<IProjectionEventHandler, RadarProjectionHandler>();
 builder.Services.AddScoped<DurableRawEventDispatcher>();
 builder.Services.AddScoped<RiskEvidenceCollector>();
+builder.Services.AddScoped<IntelligenceAssessmentService>();
 builder.Services.AddScoped(provider => new SolanaBackfillReconciliationService(
     provider.GetRequiredService<ISolanaBackfillSource>(),
     provider.GetRequiredService<ISolanaTransactionSource>(),

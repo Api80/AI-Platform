@@ -16,7 +16,7 @@ Crypto Intelligence System 是 AI Platform 在金融领域的一个链上智能�
 
 ## 当前进度
 
-当前状态：`M2 代码出口完成、真实运行验收待执行；M3A 规则引擎已合并；M3B 风险证据组件已完成离线验证`。
+当前状态：`M2 代码出口完成、真实运行验收待执行；M3A/M3B 已合并；M3C 风险评估持久化已完成 Docker PostgreSQL 验证`。
 
 - [PROJECT_STATUS.md](./PROJECT_STATUS.md)  
   当前项目情况、已完成设计、实施状态、风险和下一步。
@@ -33,7 +33,7 @@ Crypto Intelligence System 是 AI Platform 在金融领域的一个链上智能�
   M2 增量范围、可靠采集、Solana Source、正式 Adapter、Radar 投影和运行说明。
 
 - [M3_THEME_MINIMAL_RISK.md](./M3_THEME_MINIMAL_RISK.md)
-  M3A 主题/最小风险规则，以及 M3B Sell Quote、Authority、Holder 证据组件和当前生产边界。
+  M3A 规则、M3B 证据组件、M3C 追加式评估历史/Radar 查询及当前生产边界。
 
 ## Phase 1 MVP 实施基线
 

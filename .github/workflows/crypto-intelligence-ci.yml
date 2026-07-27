@@ -84,3 +84,13 @@ jobs:
           --configuration Release
           --project src/CryptoIntelligence.Infrastructure/CryptoIntelligence.Infrastructure.csproj
           --startup-project src/CryptoIntelligence.Infrastructure/CryptoIntelligence.Infrastructure.csproj
+
+      - name: Test PostgreSQL assessment persistence
+        env:
+          CRYPTO_TEST_DB_CONNECTION: >-
+            Host=127.0.0.1;Port=5432;Database=crypto_intelligence_ci;Username=postgres
+        run: >-
+          dotnet test tests/CryptoIntelligence.Infrastructure.Tests
+          --configuration Release
+          --no-build
+          --filter Category=Postgres

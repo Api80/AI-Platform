@@ -2,7 +2,7 @@
 
 > 更新时间：2026-07-28  
 > 状态：M0/M1 已完成，M2 运行验收待执行，M3 Theme and Minimal Risk 开发中
-> 代码实施进度：M2A-M2D 已合并；M3A 规则引擎已合并；M3B 证据组件已完成离线验证
+> 代码实施进度：M2A-M2D 已合并；M3A/M3B 已合并；M3C 评估持久化已完成本地 Docker 验证
 
 ## 1. Project Positioning
 
@@ -121,8 +121,8 @@ Phase 1 实际开发以 MVP Implementation Baseline 为准；长期设计用于�
 | Strategy validation protocol | Completed | 尚无真实样本 |
 | Phase 1 MVP detailed design | Completed | MVP Design、Configuration 和 Implementation Plan 已完成 |
 | Adapter selection spike | Completed | Raydium LaunchLab + CPMM，10 个离线 Fixtures 和实时发现/补采验证通过 |
-| Solution/code | In progress | M3A 规则链路已完成；M3B Sell Quote、Authority、Holder 证据组件已完成离线验证 |
-| Database migrations | In progress | Migration 001-004 已生成并验证；Migration 004 增加 Radar 读模型 |
+| Solution/code | In progress | M3C Theme/Risk 追加式持久化、Candidate 最新关联和 Radar 解释查询已完成 |
+| Database migrations | In progress | Migration 001-005 已生成并在 Docker PostgreSQL 16 验证 |
 | Historical replay | In progress | 确定性 Replay 基础已完成；正式数据集依赖 M2 运行验收 |
 | Forward paper | Not started | 依赖前序 Milestone |
 | Dashboard | Not started | 只计划最小查询和监控能力 |
@@ -217,8 +217,10 @@ Phase 1 的买卖判断以可复现、可回放的规则策略为基线。
 6. M2 真实环境七天验收仍待执行，不阻塞 M3 纯规则开发；
 7. M3A Theme/Minimal Risk 规则已完成并合并；
 8. M3B Sell Quote、Authority、Holder 证据组件已完成离线验证；
-9. 下一步 M3C 接入 Candidate 投影，完成追加式持久化、幂等约束和 Radar 最新解释查询；
-10. 同 Slot Pool Snapshot、真实 Solana RPC 和 PostgreSQL 集成仍需在具备相应环境后验收。
+9. M3C Theme/Risk 追加式持久化、幂等约束、Candidate 最新关联和 Radar 解释查询已完成；
+10. 本地 Docker PostgreSQL 已建立，Migration 001-005 和真实数据库集成测试通过；
+11. 下一步 M3D 接入同 Slot Pool Snapshot，在 Worker 中自动触发证据采集和评估；
+12. 真实 Solana RPC 对照和连续运行验收仍待执行。
 
 ## 11. Current Assessment
 

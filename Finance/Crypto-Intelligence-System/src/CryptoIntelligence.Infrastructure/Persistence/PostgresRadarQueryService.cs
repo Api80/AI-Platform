@@ -1,4 +1,7 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using CryptoIntelligence.Application.Radar;
+using CryptoIntelligence.Domain.Intelligence;
 using CryptoIntelligence.Domain.Radar;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +11,8 @@ public sealed class PostgresRadarQueryService(
     CryptoIntelligenceDbContext context)
     : IRadarQueryService
 {
+    private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
+
     public async Task<IReadOnlyList<RadarCandidateReadModel>> ListCandidatesAsync(
         CandidateStatus? status,
         int limit,
@@ -66,6 +71,8 @@ public sealed class PostgresRadarQueryService(
             .FirstOrDefault();
         string? quoteMint = null;
         string? features = null;
+        ThemeMatchResult? theme = null;
+        RiskAssessment? risk = null;
         if (latestPool is not null)
         {
             quoteMint = await context.Tokens.AsNoTracking()
@@ -81,6 +88,35 @@ public sealed class PostgresRadarQueryService(
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
+        if (core.candidate.LatestThemeMatchId is { } themeId)
+        {
+            var stored = await context.ThemeMatches.AsNoTracking()
+                .SingleAsync(value => value.Id == themeId, cancellationToken);
+            theme = new ThemeMatchResult(
+                stored.Matched,
+                stored.Blocked,
+                stored.ConfigurationValid,
+                stored.ThemeScore,
+                Deserialize<string>(stored.MatchedThemes),
+                Deserialize<string>(stored.MatchReasons),
+                stored.InputAsOfTime,
+                stored.ConfigurationVersion);
+        }
+
+        if (core.candidate.LatestRiskAssessmentId is { } riskId)
+        {
+            var stored = await context.RiskAssessments.AsNoTracking()
+                .SingleAsync(value => value.Id == riskId, cancellationToken);
+            risk = new RiskAssessment(
+                stored.OverallScore,
+                stored.RiskLevel,
+                stored.HardReject,
+                Deserialize<RiskRuleResult>(stored.RuleResults),
+                Deserialize<string>(stored.Reasons),
+                stored.InputAsOfTime,
+                stored.RiskModelVersion);
+        }
+
         return new RadarCandidateReadModel(
             core.token.MintAddress,
             core.token.Name,
@@ -91,6 +127,18 @@ public sealed class PostgresRadarQueryService(
             core.candidate.Reason,
             pools.Count,
             quoteMint,
-            features);
+            features,
+            theme,
+            risk);
+    }
+
+    private static IReadOnlyList<T> Deserialize<T>(string json) =>
+        JsonSerializer.Deserialize<T[]>(json, JsonOptions) ?? [];
+
+    private static JsonSerializerOptions CreateJsonOptions()
+    {
+        var options = new JsonSerializerOptions();
+        options.Converters.Add(new JsonStringEnumConverter());
+        return options;
     }
 }

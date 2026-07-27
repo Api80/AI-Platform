@@ -23,6 +23,7 @@ var configurationSnapshot = ConfigurationSnapshotFactory.Create(
 builder.Services.AddSingleton(mvpConfiguration!);
 builder.Services.AddSingleton(configurationSnapshot);
 builder.Services.AddSingleton<IntelligenceEvaluationService>();
+builder.Services.AddScoped<IntelligenceAssessmentService>();
 
 var connectionString =
     builder.Configuration.GetConnectionString("Postgres")
@@ -249,7 +250,34 @@ static RadarCandidateResponse ToResponse(RadarCandidateReadModel value) => new(
     value.Reason,
     value.PoolCount,
     value.QuoteTokenAddress,
-    value.LatestFeaturesJson);
+    value.LatestFeaturesJson,
+    value.LatestTheme is null
+        ? null
+        : new ThemeMatchResponse(
+            value.LatestTheme.Matched,
+            value.LatestTheme.Blocked,
+            value.LatestTheme.ConfigurationValid,
+            value.LatestTheme.ThemeScore,
+            value.LatestTheme.MatchedThemes,
+            value.LatestTheme.MatchReasons,
+            value.LatestTheme.InputAsOfTime,
+            value.LatestTheme.ConfigurationVersion),
+    value.LatestRisk is null
+        ? null
+        : new RiskAssessmentResponse(
+            value.LatestRisk.OverallScore,
+            value.LatestRisk.RiskLevel.ToString(),
+            value.LatestRisk.HardReject,
+            value.LatestRisk.RuleResults.Select(rule => new RiskRuleResponse(
+                    rule.RuleId,
+                    rule.Outcome.ToString(),
+                    rule.HardReject,
+                    rule.RiskScore,
+                    rule.Reason))
+                .ToArray(),
+            value.LatestRisk.Reasons,
+            value.LatestRisk.InputAsOfTime,
+            value.LatestRisk.RiskModelVersion));
 
 static IntelligenceEvaluationResponse ToIntelligenceResponse(
     IntelligenceEvaluationResult value) => new(

@@ -72,6 +72,21 @@ dotnet tool run dotnet-ef migrations script \
 
 启动 API 或 Worker 前，通过环境变量提供 PostgreSQL 连接。
 
+## Local Docker Database
+
+本地开发统一使用 PostgreSQL 16 Docker 容器，不要求在 Windows 安装 PostgreSQL：
+
+```text
+Container: crypto-intelligence-postgres
+Image: postgres:16-alpine
+Host: 127.0.0.1
+Port: 55432
+Database: crypto_intelligence
+Volume: crypto-intelligence-postgres-data
+```
+
+密码只保存在本地容器环境中，不写入仓库。执行迁移或启动应用时，将对应连接字符串放入 `CRYPTO_DB_CONNECTION`。数据库集成测试使用独立变量 `CRYPTO_TEST_DB_CONNECTION`。
+
 ## M1 Gate Result
 
 - GitHub CI 在干净环境执行通过；

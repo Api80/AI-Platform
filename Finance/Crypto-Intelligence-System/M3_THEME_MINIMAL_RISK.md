@@ -1,6 +1,6 @@
 # M3 Theme and Minimal Risk
 
-> 状态：M3A Rule Engine complete；M3B Evidence Components complete（离线验证）；持久化和真实环境验收待完成
+> 状态：M3A Rule Engine、M3B Evidence Components、M3C Assessment Persistence complete；真实链上证据触发待完成
 
 ## 目标
 
@@ -85,25 +85,47 @@ POST /api/v1/intelligence/evaluate
 
 `RiskEvidenceCollector` 并行读取 Authority 和 Holder 证据，结合 Sell Quote 与采集状态生成 M3A `RiskEvidenceSnapshot`。缺失字段保持 `null`，由规则引擎执行 Missing + Hard Reject。
 
+## M3C 已完成
+
+### 追加式评估历史
+
+- 新增 `theme_matches` 与 `risk_assessments`；
+- 相同 Token、Configuration/Model Version 和 InputAsOfTime 具有数据库唯一约束；
+- 重复写入内容一致时复用历史记录；
+- 相同身份但内容不一致时拒绝写入，暴露非确定性结果；
+- Theme/Risk 结果、规则明细和原因均保留历史，不覆盖旧版本。
+
+### Candidate 与 Radar
+
+- Candidate 关联最新 ThemeMatch、RiskAssessment 和 EvaluationAsOfTime；
+- 只有不早于当前最新时间的结果才能更新 Candidate 状态；
+- Radar Candidate 列表和详情返回最新 Theme/Risk 完整解释；
+- `IntelligenceAssessmentService` 提供可信采集链路的“评估并保存”入口，不向外开放伪造链上证据的持久化接口。
+
+### 数据库验证
+
+- Migration 005 已在本地 Docker PostgreSQL 16 执行；
+- 重复写、冲突写、Candidate 关联和 Radar 查询已通过真实 PostgreSQL 集成测试；
+- GitHub CI 在迁移后单独执行 PostgreSQL 持久化测试。
+
 ## 当前安全边界
 
 系统已经具备证据组件，但尚未完成以下生产闭环：
 
 - 从正式采集链路生成同 Slot 的 Pool State/Vault Reserve Snapshot；
-- 将证据采集器接入 Candidate 投影；
-- ThemeMatch/RiskAssessment 追加式持久化与查询；
+- 在 Worker 中使用可信 Pool Snapshot 触发 Evidence Collector 与 Assessment Service；
 - 使用真实 Solana RPC 对 Authority/Holder 结果进行现场比对；
-- 使用 PostgreSQL 验证迁移、幂等和历史查询。
+- 对连续采集期间的评估延迟、失败重试和覆盖率进行验收。
 
 因此当前 Sell Quote 组件只接受可信的 Pool Snapshot 输入，不能宣称已形成可执行的真实链上报价。缺失证据仍会得到 Missing + Hard Reject，调用方不能伪造证据把候选送入策略。
 
 ## 下一增量
 
-M3C 将实现：
+M3D 将实现：
 
-- ThemeMatch/RiskAssessment 追加式持久化；
-- Candidate 投影与历史评估关联；
-- 相同 Token、版本和 AsOfTime 的幂等约束；
-- Radar 查询返回最新 Theme/Risk 解释。
+- 从正式 Pool State/Vault 数据生成同 Slot Snapshot；
+- Worker 串联 RiskEvidenceCollector、IntelligenceAssessmentService 和 Candidate；
+- 证据采集失败重试与运行指标；
+- 使用真实 Solana RPC 进行 Authority、Holder 和 Sell Quote 对照验收。
 
-M3C 可以继续生成代码和数据库迁移，但数据库集成验证需要后续 Docker、云数据库或服务器 PostgreSQL 环境。Pool Snapshot 正式接入和真实证据联调将在可用 Solana RPC 环境单独验收。
+在 M3D 完成前，系统可以保存和查询可信输入产生的评估，但不能宣称已自动形成真实链上风险闭环。

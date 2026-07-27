@@ -10,4 +10,6 @@ public sealed record RadarCandidateResponse(
     string? Reason,
     int PoolCount,
     string? QuoteTokenAddress,
-    string? LatestFeaturesJson);
+    string? LatestFeaturesJson,
+    ThemeMatchResponse? LatestTheme,
+    RiskAssessmentResponse? LatestRisk);
