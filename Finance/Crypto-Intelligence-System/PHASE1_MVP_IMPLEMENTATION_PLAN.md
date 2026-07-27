@@ -107,6 +107,9 @@ samples/
 
 ## 5. Milestone 0: Adapter Selection Spike
 
+> 状态：Completed（2026-07-28）
+> 证据：[ADAPTER_SPIKE_REPORT.md](./ADAPTER_SPIKE_REPORT.md)
+
 ### Objective
 
 确认一个 Launch Source 和一个 AMM/Pool 能够支撑从新币发现到模拟退出的完整闭环。

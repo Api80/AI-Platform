@@ -39,14 +39,21 @@ network: mainnet-beta
 runType: HistoricalReplay
 
 source:
-  launchAdapter: null              # Adapter Spike 后填写
-  poolAdapter: null                # Adapter Spike 后填写
-  programIds: []
-  startSlot: null
+  launchAdapter: RaydiumLaunchLabV1
+  poolAdapter: RaydiumCpmmV1
+  adapterVersion: raydium-launchlab-cpmm-m0-v1
+  parserVersions:
+    launchLab: raydium-launchlab-e7e0c96-v1
+    cpmm: raydium-cpmm-e7e0c96-v1
+  programIds:
+    - LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj
+    - CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C
+  fixtureCoverageStartSlot: 339103624
+  historicalRunStartSlot: null
   discoveryCommitment: confirmed
   strategyCommitment: finalized
   requireReconciledData: true
-  rpcSourceName: null
+  rpcSourceName: solana-public-development
   fallbackRpcSourceName: null
 
 radar:

@@ -1,8 +1,8 @@
 # Crypto Intelligence System Project Status
 
 > 更新时间：2026-07-28  
-> 状态：Phase 1 MVP 方案完成，Ready for Adapter Spike  
-> 代码实施进度：尚未开始
+> 状态：M0 Adapter Selection Spike 已完成，Ready for M1 Foundation
+> 代码实施进度：Adapter Spike 原型完成，正式 MVP 工程尚未开始
 
 ## 1. Project Positioning
 
@@ -120,8 +120,8 @@ Phase 1 实际开发以 MVP Implementation Baseline 为准；长期设计用于�
 | Paper execution specification | Completed | 尚未实现 Adapter Quote |
 | Strategy validation protocol | Completed | 尚无真实样本 |
 | Phase 1 MVP detailed design | Completed | MVP Design、Configuration 和 Implementation Plan 已完成 |
-| Adapter selection spike | Not started | Launch Source、AMM、ProgramId 尚未选择 |
-| Solution/code | Not started | 当前仓库只有设计文档 |
+| Adapter selection spike | Completed | Raydium LaunchLab + CPMM，10 个离线 Fixtures 和实时发现/补采验证通过 |
+| Solution/code | In progress | M0 .NET 原型完成；M1 正式 Solution 尚未创建 |
 | Database migrations | Not started | 等待 MVP 物理模型 |
 | Historical replay | Not started | 依赖 Adapter 和 Raw Event Store |
 | Forward paper | Not started | 依赖前序 Milestone |
@@ -198,25 +198,23 @@ Phase 1 的买卖判断以可复现、可回放的规则策略为基线。
 
 以下决策需要 Adapter Spike 或真实数据后确定：
 
-1. 首个 Launch Source；
-2. 首个 AMM/Pool；
-3. ProgramId 和 Parser 样本；
-4. RPC Source 和故障切换配置；
-5. 新币观察窗口；
-6. 动量和风险参数初始范围；
-7. Network/Priority Fee 假设；
-8. 采集 7 天后的容量和分区参数。
+1. 正式主 RPC Source 和独立备用 Source；
+2. Historical Run 起始 Slot 和数据范围；
+3. 新币观察窗口；
+4. 动量和风险参数初始范围；
+5. Network/Priority Fee 假设；
+6. 采集 7 天后的容量和分区参数。
 
 这些参数必须配置化、版本化并保存到 StrategyRun。
 
 ## 10. Next Actions
 
-1. 执行 Adapter Selection Spike；
-2. 选择首个 Launch Source 和 AMM/Pool Adapter；
-3. 固化 ProgramId、Fixtures、ParserVersion、Quote 和 Backfill 方法；
-4. 回填 MVP Configuration 必需参数；
-5. 创建 .NET Solution 和数据库迁移；
-6. 按 MVP Milestone 开始开发；
+1. 评审并合并 M0 Adapter Spike PR；
+2. 创建 M1 .NET Solution、模块边界和测试工程；
+3. 实现配置 Schema、版本和启动校验；
+4. 创建 PostgreSQL 基础迁移；
+5. 建立结构化日志、Health Check 和 CI；
+6. M1 Exit Gate 通过后进入 M2 可靠采集；
 7. 稳定采集 7 天后完成容量和 SLO 复审。
 
 ## 11. Current Assessment
@@ -228,4 +226,4 @@ Phase 1 的买卖判断以可复现、可回放的规则策略为基线。
 - 规则策略扣除全部执行成本后仍有优势；
 - 系统能够诚实记录无法成交和无法退出。
 
-当前长期架构、Phase 1 MVP 设计、配置规范和实施计划均已完成。下一阶段不再继续扩展设计范围，直接从 Adapter Selection Spike 开始单来源闭环实施。
+当前长期架构、Phase 1 MVP 设计和 M0 Adapter Selection Spike 均已完成。下一阶段不再扩展设计范围，直接进入 M1 Foundation，建立正式可编译、可测试、可迁移的模块化单体工程。

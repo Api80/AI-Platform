@@ -16,7 +16,7 @@ Crypto Intelligence System 是 AI Platform 在金融领域的一个链上智能�
 
 ## 当前进度
 
-当前状态：`Phase 1 M0 Adapter Spike 进行中，Raydium LaunchLab + CPMM Conditional Go`。
+当前状态：`Phase 1 M0 Adapter Spike 已完成，Ready for M1 Foundation`。
 
 - [PROJECT_STATUS.md](./PROJECT_STATUS.md)  
   当前项目情况、已完成设计、实施状态、风险和下一步。
@@ -24,7 +24,7 @@ Crypto Intelligence System 是 AI Platform 在金融领域的一个链上智能�
 - [ADAPTER_SPIKE_REPORT.md](./ADAPTER_SPIKE_REPORT.md)  
   首个 Launch/Pool Adapter 候选矩阵、主网证据、ProgramId、版本固定、Quote 验证、限制和 M0 Exit Gate。
 
-已完成 Adapter 初选和真实主网样本验证。下一步实现可运行的 Parser/Quote/Discovery 小型原型并补齐固定原始 Fixtures；M0 Exit Gate 通过后再进入正式工程骨架。
+已完成 Raydium LaunchLab + CPMM 选型、10 个主网离线 Fixtures、IDL 解析、整数 Quote，以及 WebSocket 发现与 RPC 补采验证。下一步进入 M1，创建正式 .NET Solution、配置、数据库、可观测性和 CI 骨架。
 
 ## Phase 1 MVP 实施基线
 

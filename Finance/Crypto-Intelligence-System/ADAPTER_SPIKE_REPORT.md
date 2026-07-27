@@ -2,7 +2,7 @@
 
 > 更新时间：2026-07-28  
 > Milestone：M0 Adapter Selection Spike  
-> 状态：Conditional Go（选型可冻结，原型代码与缺失 Fixtures 仍需完成）
+> 状态：M0 Completed / Go
 
 ## 1. Executive Decision
 
@@ -18,7 +18,7 @@ Phase 1 首个闭环有条件选择：
 
 该组合的主要优势是 LaunchLab 完成 bonding curve 后可以直接迁移到同一生态的 CPMM，官方提供版本化 IDL、SDK、ProgramId 和池查询接口，最适合 Phase 1 的“发现 → 观察 → 模拟买入 → 迁移后继续观察/模拟卖出”单来源闭环。
 
-本结论不是盈利结论，也不代表 M0 全部完成。进入 M1/M2 正式实现前，仍需完成可运行 Parser、WebSocket 验证、原始 Payload 固化和 Liquidity Fixtures。
+本结论不是盈利结论。M0 技术退出条件已经完成，可以进入 M1 工程骨架；正式 Forward Paper 前仍必须配置独立主/备 RPC。
 
 ## 2. Candidate Matrix
 
@@ -82,14 +82,17 @@ SDK v2 当前采用 GPL-3.0。Phase 1 不应直接复制或嵌入 SDK 代码；�
 
 - WSOL reserve：`12404.532310903`；
 - Token reserve：`16137545.623432`；
-- fee rate：`0.0025`。
+- trading fee rate：`0.0025`；
+- creator fee rate：`0.0005`，该样本池为输入侧收取。
 
 以恒定乘积 Exact Input 原型计算：
 
-| Direction | Input | Estimated output | Input fee | Estimated price impact |
+| Direction | Input | Estimated output | Trading + creator fee | Total impact |
 |---|---:|---:|---:|---:|
-| Buy | 0.1 WSOL | 129.7676680802866 Token | 0.00025 WSOL | 0.250802% |
-| Sell | 1000 Token | 0.766706194325576 WSOL | 2.5 Token | 0.256165% |
+| Buy | 0.1 WSOL | 129.702622 Token | 0.00030 WSOL | 30 bps |
+| Sell | 1000 Token | 0.766321904 WSOL | 3 Token | 30 bps |
+
+整数除法、fee 向上取整和恒定乘积输出向下取整已与固定 commit `fb2d829a` 的 Raydium SDK v2 `CurveCalculator.swapBaseInput`、`CpmmFee.tradingFee` 和 `ConstantProductCurve.swapBaseInputWithoutFees` 逐项交叉核对。
 
 本结果只证明双向单位、费用和价格冲击计算路径可行，不是生产报价。正式实现必须：
 
@@ -108,13 +111,14 @@ SDK v2 当前采用 GPL-3.0。Phase 1 不应直接复制或嵌入 SDK 代码；�
 - LaunchLab 与 CPMM 均已取得 finalized 历史样本；
 - 失败 signature 可以保留 `InstructionError`；
 - 可使用 `before` 分页补采历史记录。
+- LaunchLab WebSocket `logsSubscribe` 捕获 signature 后可立即通过 RPC 取得 confirmed transaction；
+- CPMM WebSocket `logsSubscribe` 捕获 signature 后可立即通过 RPC 取得 confirmed transaction；
+- 原型包含 RPC 暂时空结果重试，并可读取 confirmation status。
 
-### Pending
+### Operational follow-up
 
-- 在持续运行的 Worker 中验证 WebSocket `logsSubscribe` 断线重连；
-- 记录 WebSocket 首见时间与 RPC 可用时间差；
-- 验证 RPC 暂时返回空时的重试和 commitment 刷新；
-- 验证主/备 RPC 的一致性和限流行为。
+- Worker 自动重连、长期延迟指标和主/备 RPC 切换进入 M2 可靠采集实现；
+- 正式 Forward Paper 前必须选择付费主 RPC 和独立备用 RPC。
 
 公共 Solana RPC 在批量抓取时出现明显限流，因此它只适合开发验证，不应作为正式 Forward Paper 的唯一数据源。
 
@@ -144,8 +148,7 @@ DomainEventId = EventId + parserVersion + domainEventIndex
 
 ## 8. Known Limitations
 
-- 当前样本仍缺少已固化的 Liquidity Added、Liquidity Removed 和完整迁移 transaction raw payload；
-- WebSocket 实时发现尚未形成可重复测试；
+- 已固化样本足以通过 M0，但尚未覆盖所有 Token-2022 和未来 Program 版本；
 - Raydium API 只能辅助发现和交叉验证，不能成为研究事实来源；
 - LaunchLab 的正式实现应以链上 payload 和固定 IDL 为准；
 - 公共 RPC 会限流，需要配置付费主源和独立备用源；
@@ -158,25 +161,24 @@ DomainEventId = EventId + parserVersion + domainEventIndex
 | Task | Status | Evidence / remaining work |
 |---|---|---|
 | M0-01 Candidate Matrix | Completed | Raydium selected; Meteora retained as backup |
-| M0-02 Fixed Fixtures | In progress | Init/Buy/Sell/failed/multi-event/CPMM swap manifest created; raw payload and liquidity fixtures pending |
-| M0-03 Parser Prototype | Pending | Implement executable deterministic parser and contract tests |
-| M0-04 Quote Prototype | In progress | Formula and bidirectional sample verified; integer on-chain-state implementation pending |
-| M0-05 Discovery/Backfill | In progress | RPC path verified; WebSocket/retry/failover pending |
-| M0-06 Adapter Decision | Conditional Go | ProgramIds and version pins fixed; completion depends on M0-02 to M0-05 |
+| M0-02 Fixed Fixtures | Completed | 10 raw payloads: init/buy/sell/failed/multi-event/migration/deposit/withdraw/CPMM swap |
+| M0-03 Parser Prototype | Completed | Fixed IDL discriminator, self-CPI event, Token transfer and deterministic replay verified |
+| M0-04 Quote Prototype | Completed | Integer exact-input quote, trading fee, creator fee and official reference cross-check verified |
+| M0-05 Discovery/Backfill | Completed | LaunchLab/CPMM WebSocket discovery and immediate RPC retrieval verified |
+| M0-06 Adapter Decision | Go | ProgramIds, IDL pins, ParserVersion and fixture StartSlot fixed |
 
 ## 10. Exit Gate
 
-允许下一步创建小型 Adapter Spike 工程，但暂不允许宣告 M0 完成，也不进入大规模 M2 Parser 开发。
+M0 Exit Gate 已通过：
 
-M0 转为 `Completed` 前必须满足：
+- 原始 JSON payload 与固定 IDL 已进入仓库；
+- 10 个 Fixture 的 manifest 断言和重复解析测试通过；
+- 买入、卖出、迁移、CPMM Swap、加/减流动性和失败交易均有样本；
+- 未知 IDL discriminator 会显式抛出 `UnsupportedProgramVersionException`；
+- WebSocket 发现与 RPC 补采已在 LaunchLab、CPMM 各验证一次；
+- Fixture 覆盖起始 Slot 固定为 `339103624`。
 
-- 固化原始 JSON payload，而不只是 signature；
-- Parser 原型和重复解析测试通过；
-- CPMM 整数 Quote 与官方参考结果交叉验证；
-- 补齐 Liquidity Added/Removed 和迁移样本；
-- WebSocket + RPC 补采原型运行通过；
-- 配置正式 RPC Source 与 fallback Source；
-- 将 StartSlot 固定为已验证数据覆盖的起点。
+下一阶段进入 M1 Foundation。公共 RPC 仅作为开发验证源，付费主源和独立备用源是 Forward Paper 启动门槛，不阻塞 M1。
 
 ## 11. Official References
 
