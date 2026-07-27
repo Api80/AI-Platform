@@ -1,4 +1,5 @@
 using CryptoIntelligence.Domain.Intelligence;
+using System.Numerics;
 
 namespace CryptoIntelligence.Domain.Tests;
 
@@ -6,6 +7,28 @@ public sealed class IntelligenceModelTests
 {
     private static readonly DateTimeOffset Now =
         DateTimeOffset.Parse("2026-07-28T00:01:00Z");
+
+    [Fact]
+    public void Cpmm_quote_matches_pinned_raydium_sdk_vectors()
+    {
+        var buy = CpmmExactInputQuoteCalculator.Calculate(
+            BigInteger.Parse("12404532310903"),
+            BigInteger.Parse("16137545623432"),
+            BigInteger.Parse("100000000"),
+            tradingFeeBasisPoints: 25,
+            creatorFeeBasisPoints: 5);
+        var sell = CpmmExactInputQuoteCalculator.Calculate(
+            BigInteger.Parse("16137545623432"),
+            BigInteger.Parse("12404532310903"),
+            BigInteger.Parse("1000000000"),
+            tradingFeeBasisPoints: 25,
+            creatorFeeBasisPoints: 5);
+
+        Assert.Equal(BigInteger.Parse("129702622"), buy.AmountOutRaw);
+        Assert.Equal(BigInteger.Parse("766321904"), sell.AmountOutRaw);
+        Assert.Equal(30, buy.TotalImpactBasisPoints);
+        Assert.Equal(30, sell.TotalImpactBasisPoints);
+    }
 
     [Fact]
     public void Theme_match_normalizes_case_punctuation_and_whitespace()
