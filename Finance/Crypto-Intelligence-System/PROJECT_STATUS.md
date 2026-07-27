@@ -100,6 +100,14 @@ Phase 1 不实现完整 Wallet Intelligence、AI 交易模型、多 DEX、多链
 - [STRATEGY_VALIDATION_PROTOCOL_V1.md](./STRATEGY_VALIDATION_PROTOCOL_V1.md)
 - [OBSERVABILITY_SLO_PHASE1.md](./OBSERVABILITY_SLO_PHASE1.md)
 
+### Phase 1 MVP Implementation Baseline
+
+- [PHASE1_MVP_DESIGN.md](./PHASE1_MVP_DESIGN.md)
+- [PHASE1_MVP_CONFIGURATION.md](./PHASE1_MVP_CONFIGURATION.md)
+- [PHASE1_MVP_IMPLEMENTATION_PLAN.md](./PHASE1_MVP_IMPLEMENTATION_PLAN.md)
+
+Phase 1 实际开发以 MVP Implementation Baseline 为准；长期设计用于约束稳定边界和未来扩展。
+
 ## 5. Implementation Status
 
 | Area | Status | Notes |
