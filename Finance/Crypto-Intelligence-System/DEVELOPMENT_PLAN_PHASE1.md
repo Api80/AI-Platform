@@ -3,7 +3,9 @@
 > 状态：Phase 1 实施计划基线  
 > 上位架构：[DESIGN_PROPOSAL_V2.md](./DESIGN_PROPOSAL_V2.md)  
 > 领域模型：[DOMAIN_MODEL.md](./DOMAIN_MODEL.md)  
-> 数据模型：[DATA_MODEL_DESIGN.md](./DATA_MODEL_DESIGN.md)
+> 数据模型：[DATA_MODEL_DESIGN.md](./DATA_MODEL_DESIGN.md)  
+> 关键决策：[adr/](./adr/)  
+> 专项规范：[PAPER_EXECUTION_MODEL_V1.md](./PAPER_EXECUTION_MODEL_V1.md)、[STRATEGY_VALIDATION_PROTOCOL_V1.md](./STRATEGY_VALIDATION_PROTOCOL_V1.md)、[OBSERVABILITY_SLO_PHASE1.md](./OBSERVABILITY_SLO_PHASE1.md)
 
 ## 1. Goal
 
@@ -105,9 +107,13 @@ Analytics
 - 接入 Solana RPC，用于交易详情、状态确认和补采；
 - 实现 RawBlockchainEvent Store；
 - 实现 IngestionCheckpoint；
-- 实现链上事件确定性 EventId 和唯一约束；
+- 实现包含 EventOrdinal 的确定性 EventId 和唯一约束；
+- 实现 At-least-once 投递、Worker Lease 和幂等 Consumer；
 - 实现 Transaction Parser 和 ParserVersion；
 - 实现 Pending、Processing、Completed、RetryableFailure、DeadLetter 状态；
+- 实现 Observed、Persisted、Processed、Finalized、Reconciled 五类连续水位；
+- 实现 Observed、Confirmed、Finalized、Reverted canonical 状态；
+- 实现 provisional 派生结果失效和投影重建；
 - 实现进程重启恢复；
 - 实现 WebSocket 断线后的 Slot 范围补采；
 - 实现 RPC 超时、限流、重试和退避；
@@ -270,7 +276,8 @@ Analytics
 - 实现基于 Pool 状态的滑点和价格冲击；
 - 实现部分成交、失败、过期和无法退出；
 - 实现仓位和资金限制；
-- 实现 ExecutionModelVersion。
+- 实现 ExecutionModelVersion；
+- 按 `PAPER_EXECUTION_MODEL_V1.md` 实现 Baseline 和压力场景。
 
 ### Initial Execution Assumptions
 
@@ -317,6 +324,7 @@ Analytics
 - 实现参数敏感性分析；
 - 实现费用和滑点压力测试；
 - 实现运行结果对比；
+- 按 `STRATEGY_VALIDATION_PROTOCOL_V1.md` 固化时间切分、OOS 门槛和实验记录；
 - 输出机器可读和人类可读报告。
 
 ### Required Metrics
@@ -359,7 +367,8 @@ Analytics
 - 增加身份认证和最小权限；
 - 建立数据库备份与恢复；
 - 建立运行手册和故障处理流程；
-- 建立数据缺口和关键错误告警。
+- 建立数据缺口和关键错误告警；
+- 按 `OBSERVABILITY_SLO_PHASE1.md` 实现指标、告警、Runbook、RPO 和 RTO。
 
 ### Exit Criteria
 
