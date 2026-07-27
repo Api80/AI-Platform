@@ -19,6 +19,9 @@ public sealed class CryptoIntelligenceDbContext(
     public DbSet<IngestionSlotStateEntity> IngestionSlotStates =>
         Set<IngestionSlotStateEntity>();
 
+    public DbSet<NormalizedDomainEventEntity> NormalizedDomainEvents =>
+        Set<NormalizedDomainEventEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var configuration = modelBuilder.Entity<ConfigurationSnapshotEntity>();

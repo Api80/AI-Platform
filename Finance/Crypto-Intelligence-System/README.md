@@ -30,7 +30,7 @@ Crypto Intelligence System 是 AI Platform 在金融领域的一个链上智能�
   正式工程结构、配置、数据库迁移、健康检查、测试、CI 和本地运行说明。
 
 - [M2_RELIABLE_INGESTION.md](./M2_RELIABLE_INGESTION.md)
-  M2 增量范围、原始事件身份、水位、Gap、Worker Lease、重试和 Dead Letter 说明。
+  M2 增量范围、可靠采集、Solana Source、正式 Raydium Adapter 和运行说明。
 
 ## Phase 1 MVP 实施基线
 

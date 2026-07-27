@@ -10,6 +10,7 @@ internal static class IngestionModelConfiguration
         ConfigureRawEvents(modelBuilder);
         ConfigureCheckpoints(modelBuilder);
         ConfigureSlotStates(modelBuilder);
+        ConfigureNormalizedEvents(modelBuilder);
     }
 
     private static void ConfigureRawEvents(ModelBuilder modelBuilder)
@@ -126,5 +127,37 @@ internal static class IngestionModelConfiguration
             .WithMany()
             .HasForeignKey(value => value.CheckpointId)
             .OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private static void ConfigureNormalizedEvents(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<NormalizedDomainEventEntity>();
+        entity.ToTable("normalized_domain_events");
+        entity.HasKey(value => value.Id);
+        entity.Property(value => value.Id).HasColumnName("id");
+        entity.Property(value => value.RawEventId).HasColumnName("raw_event_id");
+        entity.Property(value => value.DomainEventType).HasColumnName("domain_event_type").HasMaxLength(100);
+        entity.Property(value => value.DomainEventIndex).HasColumnName("domain_event_index");
+        entity.Property(value => value.ProgramId).HasColumnName("program_id").HasMaxLength(64);
+        entity.Property(value => value.Payload).HasColumnName("payload").HasColumnType("jsonb");
+        entity.Property(value => value.EventTime).HasColumnName("event_time").HasColumnType("timestamp with time zone");
+        entity.Property(value => value.ParserVersion).HasColumnName("parser_version").HasMaxLength(100);
+        entity.Property(value => value.SchemaVersion).HasColumnName("schema_version").HasMaxLength(50);
+        entity.Property(value => value.CreatedTime).HasColumnName("created_time").HasColumnType("timestamp with time zone");
+        entity.HasIndex(value => new
+        {
+            value.RawEventId,
+            value.DomainEventType,
+            value.DomainEventIndex,
+            value.ParserVersion
+        })
+            .IsUnique()
+            .HasDatabaseName("ux_normalized_events_parser_identity");
+        entity.HasIndex(value => new { value.ProgramId, value.EventTime })
+            .HasDatabaseName("ix_normalized_events_program_time");
+        entity.HasOne<RawBlockchainEventEntity>()
+            .WithMany()
+            .HasForeignKey(value => value.RawEventId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
