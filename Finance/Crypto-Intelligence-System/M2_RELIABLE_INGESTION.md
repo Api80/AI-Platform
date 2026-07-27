@@ -1,7 +1,7 @@
 # M2 Reliable Ingestion and New Token Radar
 
 > 状态：Implementation in progress
-> 当前增量：M2B Solana Sources and Raydium Adapter
+> 当前增量：M2C New Token Radar Projections
 
 ## 本增量目标
 
@@ -89,12 +89,36 @@ SOLANA_RPC_FALLBACK_HTTP_URL
 
 未提供前两个变量时 Worker 保持安全禁用状态。系统不读取私钥，不签名，不发送交易。
 
-## 下一增量
+## M2C New Token Radar Projections
 
-M2C 将继续实现：
+M2C 增加：
 
 - Token/Pool/Swap/Liquidity 投影；
-- TokenCandidate、滚动 FeatureSnapshot 和确定性 Replay；
-- Raw Event 时间分区与保留策略的 PostgreSQL 验证。
+- 最小 Wallet 和 MarketSnapshot 投影；
+- TokenCandidate 的 Discovered/Observing/Eligible/Rejected/Expired 状态；
+- 15/30/60/180 秒配置化滚动窗口；
+- Price Change、Buy/Sell、Unique Buyers、交易速度、流动性变化、No Trade Duration 和 Price Impact；
+- Quote Token 明确的价格语义；
+- 实时处理与 Replay 共用 `IProjectionEventHandler`；
+- 按 Event Time、Slot、EventOrdinal 确定性重放；
+- Radar Candidate 列表与详情只读 API；
+- Migration 004。
+
+```text
+GET /api/v1/radar/candidates
+GET /api/v1/radar/candidates/{tokenAddress}
+```
+
+当前 Adapter 从 Raydium 指令参数生成首版 Radar 投影。对于 Swap，输入数量和最低输出数量属于交易意图，不等同于链上最终成交结果。进入风险、策略和 Paper Trading 前，必须继续解析 Event Payload，并用交易后的账户余额与池储备变化完成对账；未经对账的数量和价格只用于验证采集、候选状态与滚动窗口链路。
+
+## 下一增量
+
+M2D 将完成 M2 Exit Gate：
+
+- Checkpoint 与实时 Worker 的完整联动；
+- Slot/Signature Backfill 和 Finality Refresh；
+- ReconciledThroughSlot 连续推进验证；
+- Raw Event 分区参数和保留策略的 PostgreSQL 容量验证；
+- 连续采集试运行和数据缺口报告。
 
 M2 未完成前，不进入风险判断、策略决策或模拟交易。

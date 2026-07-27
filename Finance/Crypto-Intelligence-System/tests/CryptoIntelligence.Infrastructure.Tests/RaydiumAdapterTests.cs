@@ -40,6 +40,21 @@ public sealed class RaydiumAdapterTests
                 first.Failed);
             Assert.Subset(actual, expected);
             Assert.Equal(Fingerprint(first), Fingerprint(second));
+            foreach (var projectionType in expected.Where(value =>
+                         value is "MintCreated" or
+                             "PoolCreated" or
+                             "SwapObserved" or
+                             "LiquidityChanged"))
+            {
+                Assert.Contains(
+                    first.Events,
+                    value =>
+                        value.DomainEventType == projectionType &&
+                        value.Attributes is not null &&
+                        value.Attributes.ContainsKey("pool_address") &&
+                        value.Attributes.ContainsKey("base_mint") &&
+                        value.Attributes.ContainsKey("quote_mint"));
+            }
         }
     }
 

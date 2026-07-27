@@ -80,6 +80,35 @@ public sealed class PersistenceModelTests
             "ux_normalized_events_parser_identity",
             script,
             StringComparison.Ordinal);
+        Assert.Contains("tokens", script, StringComparison.Ordinal);
+        Assert.Contains("liquidity_pools", script, StringComparison.Ordinal);
+        Assert.Contains("swap_events", script, StringComparison.Ordinal);
+        Assert.Contains("liquidity_events", script, StringComparison.Ordinal);
+        Assert.Contains("market_snapshots", script, StringComparison.Ordinal);
+        Assert.Contains("token_candidates", script, StringComparison.Ordinal);
+        Assert.Contains("feature_snapshots", script, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Model_contains_radar_projection_tables()
+    {
+        using var context = CreateContext();
+        string[] tables =
+        [
+            "tokens",
+            "liquidity_pools",
+            "wallets",
+            "swap_events",
+            "liquidity_events",
+            "market_snapshots",
+            "token_candidates",
+            "feature_snapshots"
+        ];
+
+        var actual = context.Model.GetEntityTypes()
+            .Select(value => value.GetTableName())
+            .ToHashSet(StringComparer.Ordinal);
+        Assert.All(tables, table => Assert.Contains(table, actual));
     }
 
     private static CryptoIntelligenceDbContext CreateContext()

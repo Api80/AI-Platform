@@ -54,7 +54,8 @@ public sealed record ParsedAdapterEvent(
     int EventOrdinal,
     string DomainEventType,
     string Source,
-    string PayloadFingerprint);
+    string PayloadFingerprint,
+    IReadOnlyDictionary<string, string>? Attributes = null);
 
 public sealed record AdapterParseResult(
     ulong Slot,
@@ -83,9 +84,17 @@ public interface INormalizedEventStore
 
 public sealed class SolanaAdapterRawEventHandler(
     ISolanaTransactionAdapter adapter,
-    INormalizedEventStore store)
+    INormalizedEventStore store,
+    IEnumerable<CryptoIntelligence.Application.Radar.IProjectionEventHandler> projectionHandlers)
     : IRawEventHandler
 {
+    public SolanaAdapterRawEventHandler(
+        ISolanaTransactionAdapter adapter,
+        INormalizedEventStore store)
+        : this(adapter, store, [])
+    {
+    }
+
     public async Task HandleAsync(
         LeasedRawEvent rawEvent,
         CancellationToken cancellationToken)
@@ -108,6 +117,19 @@ public sealed class SolanaAdapterRawEventHandler(
             parsed.ParserVersion,
             parsed.Events,
             cancellationToken);
+        foreach (var parsedEvent in parsed.Events)
+        {
+            var projectionEvent = new CryptoIntelligence.Application.Radar.ProjectionEvent(
+                rawEvent.Id,
+                rawEvent.Event.Slot,
+                rawEvent.Event.EventTime,
+                rawEvent.Event.ObservedTime,
+                parsedEvent);
+            foreach (var handler in projectionHandlers)
+            {
+                await handler.HandleAsync(projectionEvent, cancellationToken);
+            }
+        }
     }
 }
 

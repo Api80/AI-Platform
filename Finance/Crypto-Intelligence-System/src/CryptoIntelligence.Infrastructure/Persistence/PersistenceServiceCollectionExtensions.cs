@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using CryptoIntelligence.Application.Ingestion;
+using CryptoIntelligence.Application.Radar;
 
 namespace CryptoIntelligence.Infrastructure.Persistence;
 
@@ -15,6 +16,8 @@ public static class PersistenceServiceCollectionExtensions
             options => options.UseNpgsql(connectionString));
         services.AddScoped<IRawEventStore, PostgresRawEventStore>();
         services.AddScoped<INormalizedEventStore, PostgresNormalizedEventStore>();
+        services.AddScoped<IRadarProjectionStore, PostgresRadarProjectionStore>();
+        services.AddScoped<IRadarQueryService, PostgresRadarQueryService>();
         return services;
     }
 }

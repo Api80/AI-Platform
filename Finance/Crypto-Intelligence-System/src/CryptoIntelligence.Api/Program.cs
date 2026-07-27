@@ -1,6 +1,8 @@
 using CryptoIntelligence.Api;
 using CryptoIntelligence.Application.Configuration;
+using CryptoIntelligence.Application.Radar;
 using CryptoIntelligence.Contracts;
+using CryptoIntelligence.Domain.Radar;
 using CryptoIntelligence.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
@@ -38,10 +40,57 @@ app.MapGet(
     "/api/v1/system/status",
     (ConfigurationSnapshot snapshot) => new SystemStatusResponse(
         "Crypto Intelligence API",
-        "M1 Foundation",
+        "M2 New Token Radar",
         snapshot.ConfigurationVersion,
         snapshot.ConfigurationHash,
         DateTimeOffset.UtcNow));
+
+app.MapGet(
+    "/api/v1/radar/candidates",
+    async (
+        string? status,
+        int? limit,
+        IRadarQueryService query,
+        CancellationToken cancellationToken) =>
+    {
+        CandidateStatus? parsedStatus = null;
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            if (!Enum.TryParse<CandidateStatus>(
+                    status,
+                    ignoreCase: true,
+                    out var candidateStatus))
+            {
+                return Results.BadRequest(new
+                {
+                    error = $"Unknown candidate status '{status}'."
+                });
+            }
+
+            parsedStatus = candidateStatus;
+        }
+
+        var candidates = await query.ListCandidatesAsync(
+            parsedStatus,
+            limit ?? 50,
+            cancellationToken);
+        return Results.Ok(candidates.Select(ToResponse));
+    });
+
+app.MapGet(
+    "/api/v1/radar/candidates/{tokenAddress}",
+    async (
+        string tokenAddress,
+        IRadarQueryService query,
+        CancellationToken cancellationToken) =>
+    {
+        var candidate = await query.FindCandidateAsync(
+            tokenAddress,
+            cancellationToken);
+        return candidate is null
+            ? Results.NotFound()
+            : Results.Ok(ToResponse(candidate));
+    });
 
 app.MapHealthChecks(
     "/health/live",
@@ -57,5 +106,17 @@ app.MapHealthChecks(
     });
 
 app.Run();
+
+static RadarCandidateResponse ToResponse(RadarCandidateReadModel value) => new(
+    value.TokenAddress,
+    value.Name,
+    value.Symbol,
+    value.Status.ToString(),
+    value.DiscoveredAt,
+    value.UpdatedAt,
+    value.Reason,
+    value.PoolCount,
+    value.QuoteTokenAddress,
+    value.LatestFeaturesJson);
 
 public partial class Program;
