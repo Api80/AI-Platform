@@ -19,10 +19,10 @@ Phase 1: Solana New Token Radar & Paper Trading
 
 ## 当前设计基线
 
-以下文档共同构成当前待评审的 Phase 1 设计基线，阅读顺序如下：
+以下文档共同构成 Phase 1 设计基线，阅读顺序如下：
 
 1. [DESIGN_PROPOSAL_V2.md](./DESIGN_PROPOSAL_V2.md)  
-   总体架构、核心原则、Phase 2/3 扩展方向和待评审决策。
+   总体架构、核心原则，以及 Phase 2/3 扩展方向。
 
 2. [DOMAIN_MODEL.md](./DOMAIN_MODEL.md)  
    领域概念、边界、不变量，以及 Risk、Signal、Decision、Execution 的职责划分。
@@ -33,9 +33,26 @@ Phase 1: Solana New Token Radar & Paper Trading
 4. [DEVELOPMENT_PLAN_PHASE1.md](./DEVELOPMENT_PLAN_PHASE1.md)  
    开发顺序、测试要求、里程碑交付物和验收门槛。
 
-当前状态：`Proposed / 待评审`。
+## 已接受架构决策
 
-评审通过后，上述四份文档将作为正式实施基线，并将关键技术选择拆分为 ADR。
+- [ADR-0001：Phase 1 Runtime and Persistence](./adr/ADR-0001-phase1-runtime-and-persistence.md)
+- [ADR-0002：Event Delivery, Idempotency and Checkpoints](./adr/ADR-0002-event-delivery-idempotency-and-checkpoints.md)
+- [ADR-0003：Solana Finality and Reconciliation](./adr/ADR-0003-solana-finality-and-reconciliation.md)
+- [ADR-0004：Phase 1 Solana Adapter Scope](./adr/ADR-0004-phase1-solana-adapter-scope.md)
+- [ADR-0005：Data Partition, Retention and Backup](./adr/ADR-0005-data-partition-retention-and-backup.md)
+
+## Phase 1 专项规范
+
+- [Paper Execution Model V1](./PAPER_EXECUTION_MODEL_V1.md)  
+  定义执行延迟、有效市场状态、Pool Quote、费用、滑点、价格冲击、失败条件、保守估值和压力场景。
+
+- [Strategy Validation Protocol V1](./STRATEGY_VALIDATION_PROTOCOL_V1.md)  
+  定义时间切分、最低样本、OOS 门槛、Walk-Forward、敏感性、偏差控制和研究结论状态。
+
+- [Phase 1 Observability and SLO](./OBSERVABILITY_SLO_PHASE1.md)  
+  定义数据延迟、积压、缺口、Dead Letter、备份恢复、告警和运行手册要求。
+
+当前状态：总体架构和上述 ADR/专项规范已形成 Phase 1 基线；具体 Launch Source、AMM ProgramId 和部署凭据由 Adapter Spike 与环境配置确定。
 
 ## 历史设计文档
 
