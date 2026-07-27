@@ -1,8 +1,8 @@
 # Crypto Intelligence System Project Status
 
 > 更新时间：2026-07-28  
-> 状态：M0 已完成，M1 Foundation 开发中
-> 代码实施进度：正式 .NET Solution、配置、数据库和可观测性骨架已建立
+> 状态：M0/M1 已完成，M2 Reliable Ingestion 开发中
+> 代码实施进度：M2 第一增量已建立原始事件、连续水位、Gap 和持久派发基础
 
 ## 1. Project Positioning
 
@@ -115,14 +115,14 @@ Phase 1 实际开发以 MVP Implementation Baseline 为准；长期设计用于�
 | Customer requirement | Completed | 已收敛为新币早期动量 MVP |
 | Long-term architecture | Completed | 作为未来扩展蓝图 |
 | Domain model | Completed | 已明确领域边界和不变量 |
-| Logical data model | Completed | 物理 Schema 尚未实现 |
-| Reliability ADRs | Completed | 尚未转化为代码和测试 |
+| Logical data model | Completed | Configuration 与可靠采集物理 Schema 已开始实现 |
+| Reliability ADRs | In progress | EventId、水位、Gap、Lease、重试和 Dead Letter 已转化为代码和测试 |
 | Paper execution specification | Completed | 尚未实现 Adapter Quote |
 | Strategy validation protocol | Completed | 尚无真实样本 |
 | Phase 1 MVP detailed design | Completed | MVP Design、Configuration 和 Implementation Plan 已完成 |
 | Adapter selection spike | Completed | Raydium LaunchLab + CPMM，10 个离线 Fixtures 和实时发现/补采验证通过 |
-| Solution/code | In progress | M1 正式 Solution、API、Worker 和模块边界已创建 |
-| Database migrations | In progress | Migration 001 已生成；等待 CI 空库执行 |
+| Solution/code | In progress | M1 已完成；M2 可靠采集第一增量开发中 |
+| Database migrations | In progress | Migration 001 已验证；Migration 002 增加可靠采集基础 |
 | Historical replay | Not started | 依赖 Adapter 和 Raw Event Store |
 | Forward paper | Not started | 依赖前序 Milestone |
 | Dashboard | Not started | 只计划最小查询和监控能力 |
@@ -209,13 +209,12 @@ Phase 1 的买卖判断以可复现、可回放的规则策略为基线。
 
 ## 10. Next Actions
 
-1. 评审并合并 M0 Adapter Spike PR；
-2. 创建 M1 .NET Solution、模块边界和测试工程；
-3. 实现配置 Schema、版本和启动校验；
-4. 创建 PostgreSQL 基础迁移；
-5. 建立结构化日志、Health Check 和 CI；
-6. M1 Exit Gate 通过后进入 M2 可靠采集；
-7. 稳定采集 7 天后完成容量和 SLO 复审。
+1. 完成 M2A Raw Event、Checkpoint、Gap、Lease 与 Dead Letter 基础；
+2. 接入 WebSocket 自动重连和 RPC 详情/补采；
+3. 将 Raydium Spike Parser 迁移为正式 Adapter；
+4. 建立 Token、Pool、Swap、Liquidity 和 Candidate 投影；
+5. 建立滚动 FeatureSnapshot 与确定性 Replay；
+6. 稳定采集 7 天后完成容量、分区和 SLO 复审。
 
 ## 11. Current Assessment
 
@@ -226,4 +225,4 @@ Phase 1 的买卖判断以可复现、可回放的规则策略为基线。
 - 规则策略扣除全部执行成本后仍有优势；
 - 系统能够诚实记录无法成交和无法退出。
 
-当前长期架构、Phase 1 MVP 设计和 M0 Adapter Selection Spike 均已完成。下一阶段不再扩展设计范围，直接进入 M1 Foundation，建立正式可编译、可测试、可迁移的模块化单体工程。
+当前长期架构、Phase 1 MVP 设计、M0 Adapter Selection Spike 和 M1 Foundation 均已完成。当前进入 M2，先保证链上事件可靠落库、补采、去重和回放，再构建 Radar 候选与滚动指标。

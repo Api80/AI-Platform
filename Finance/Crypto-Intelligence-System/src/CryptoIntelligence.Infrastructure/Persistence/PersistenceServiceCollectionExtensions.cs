@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using CryptoIntelligence.Application.Ingestion;
 
 namespace CryptoIntelligence.Infrastructure.Persistence;
 
@@ -12,6 +13,7 @@ public static class PersistenceServiceCollectionExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
         services.AddDbContext<CryptoIntelligenceDbContext>(
             options => options.UseNpgsql(connectionString));
+        services.AddScoped<IRawEventStore, PostgresRawEventStore>();
         return services;
     }
 }

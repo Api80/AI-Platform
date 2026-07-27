@@ -10,6 +10,15 @@ public sealed class CryptoIntelligenceDbContext(
     public DbSet<ConfigurationSnapshotEntity> ConfigurationSnapshots =>
         Set<ConfigurationSnapshotEntity>();
 
+    public DbSet<RawBlockchainEventEntity> RawBlockchainEvents =>
+        Set<RawBlockchainEventEntity>();
+
+    public DbSet<IngestionCheckpointEntity> IngestionCheckpoints =>
+        Set<IngestionCheckpointEntity>();
+
+    public DbSet<IngestionSlotStateEntity> IngestionSlotStates =>
+        Set<IngestionSlotStateEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var configuration = modelBuilder.Entity<ConfigurationSnapshotEntity>();
@@ -44,5 +53,7 @@ public sealed class CryptoIntelligenceDbContext(
         configuration
             .HasIndex(entity => new { entity.ConfigurationVersion, entity.CreatedAtUtc })
             .HasDatabaseName("ix_configuration_snapshots_version_created");
+
+        modelBuilder.ConfigureIngestion();
     }
 }

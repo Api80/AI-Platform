@@ -1,6 +1,6 @@
 # M1 Foundation
 
-> 状态：Implementation in progress
+> 状态：Completed
 
 ## Goal
 
@@ -72,8 +72,8 @@ dotnet tool run dotnet-ef migrations script \
 
 启动 API 或 Worker 前，通过环境变量提供 PostgreSQL 连接。
 
-## Remaining M1 Gate
+## M1 Gate Result
 
-- CI 在 GitHub 干净环境执行通过；
-- 使用真实 PostgreSQL 空库执行 Migration 001；
-- 完成评审后将 M1 状态改为 Completed。
+- GitHub CI 在干净环境执行通过；
+- Migration 001 已在 PostgreSQL 16 空库执行通过；
+- PR #3 已评审并合并。
