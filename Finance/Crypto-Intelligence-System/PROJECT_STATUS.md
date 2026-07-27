@@ -1,8 +1,8 @@
 # Crypto Intelligence System Project Status
 
 > 更新时间：2026-07-28  
-> 状态：M0/M1 已完成，M2 运行验收待执行，M3 Theme and Minimal Risk 开发中
-> 代码实施进度：M2A-M2D 已合并；M3A-M3C 已合并；M3D 自动风险链路已完成本地 Docker 验证
+> 状态：M0/M1 已完成，M2 运行验收待执行，M3 Exit Gate 真实运行验收待执行
+> 代码实施进度：M2A-M2D、M3A-M3D 已合并；M3E 正式运行保护、审计与验收报告已完成本地验证
 
 ## 1. Project Positioning
 
@@ -121,8 +121,8 @@ Phase 1 实际开发以 MVP Implementation Baseline 为准；长期设计用于�
 | Strategy validation protocol | Completed | 尚无真实样本 |
 | Phase 1 MVP detailed design | Completed | MVP Design、Configuration 和 Implementation Plan 已完成 |
 | Adapter selection spike | Completed | Raydium LaunchLab + CPMM，10 个离线 Fixtures 和实时发现/补采验证通过 |
-| Solution/code | In progress | M3D Finalized Swap → 同 Slot 证据 → 自动评估 → Candidate/Radar 链路已完成 |
-| Database migrations | In progress | Migration 001-006 已生成并在 Docker PostgreSQL 16 验证 |
+| Solution/code | In progress | M3E 正式运行保护、持久化评估审计和机器验收报告已完成；等待真实 RPC 连续运行 |
+| Database migrations | In progress | Migration 001-007 已生成并在 Docker PostgreSQL 16 验证 |
 | Historical replay | In progress | 确定性 Replay 基础已完成；正式数据集依赖 M2 运行验收 |
 | Forward paper | Not started | 依赖前序 Milestone |
 | Dashboard | Not started | 只计划最小查询和监控能力 |
@@ -218,11 +218,12 @@ Phase 1 的买卖判断以可复现、可回放的规则策略为基线。
 7. M3A Theme/Minimal Risk 规则已完成并合并；
 8. M3B Sell Quote、Authority、Holder 证据组件已完成离线验证；
 9. M3C Theme/Risk 追加式持久化、幂等约束、Candidate 最新关联和 Radar 解释查询已完成；
-10. 本地 Docker PostgreSQL 已建立，Migration 001-005 和真实数据库集成测试通过；
+10. 本地 Docker PostgreSQL 已建立，Migration 001-007 和真实数据库集成测试通过；
 11. M3D 已从固定 CPMM SwapEvent 取得同 Slot Vault/Fee 证据并自动触发风险评估；
 12. Finalized 重入队、Reconciled Gate、RPC 临时失败重试和运行计数器已接入；
 13. Migration 006、Evidence JSON 和自动链路 PostgreSQL 集成测试已通过；
-14. 下一步 M3E 使用付费主 RPC 与独立备用 RPC 执行真实连续运行验收。
+14. M3E 已增加正式模式主备 RPC 启动保护、自动评估审计表和机器验收报告；
+15. 下一步提供付费主 RPC 与独立备用 RPC，按固定 T0 连续运行七天并完成人工证据抽样。
 
 ## 11. Current Assessment
 
@@ -233,4 +234,4 @@ Phase 1 的买卖判断以可复现、可回放的规则策略为基线。
 - 规则策略扣除全部执行成本后仍有优势；
 - 系统能够诚实记录无法成交和无法退出。
 
-当前长期架构、Phase 1 MVP 设计、M0 Adapter Selection Spike 和 M1 Foundation 均已完成。M2 代码能力已进入出口验收阶段；M3 先推进不依赖数据库的纯规则能力，但在 M2 真实验收和 M3 正式证据接入完成前不进入策略或 Paper Trading。
+当前长期架构、Phase 1 MVP 设计、M0 Adapter Selection Spike 和 M1 Foundation 均已完成。M2/M3 代码能力均已进入真实运行出口验收阶段；在连续运行、主备切换和人工证据抽样完成前不进入策略或 Paper Trading。

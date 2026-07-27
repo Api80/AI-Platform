@@ -22,6 +22,7 @@ public sealed class AutomatedRiskAssessmentHandlerTests
         var now = DateTimeOffset.Parse("2026-07-28T00:01:00Z");
         var quote = new RecordingQuoteSource();
         var store = new RecordingAssessmentStore();
+        var audit = new RecordingAuditStore();
         var configuration = Configuration();
         var handler = new AutomatedRiskAssessmentHandler(
             new StubContextSource(new AutomatedAssessmentContext(
@@ -35,6 +36,7 @@ public sealed class AutomatedRiskAssessmentHandlerTests
                 "quote",
                 "config",
                 IsReconciled: true)),
+            audit,
             new RiskEvidenceCollector(quote, new StubTokenEvidenceSource(now)),
             new IntelligenceAssessmentService(
                 new IntelligenceEvaluationService(configuration),
@@ -56,6 +58,12 @@ public sealed class AutomatedRiskAssessmentHandlerTests
             store.Evaluation.Candidate.Status);
         Assert.True(store.Evidence.IsFinalized);
         Assert.True(store.Evidence.IsReconciled);
+        Assert.Equal(
+            [
+                AutomatedAssessmentOutcome.Attempted,
+                AutomatedAssessmentOutcome.Completed
+            ],
+            audit.Outcomes);
     }
 
     [Fact]
@@ -63,9 +71,11 @@ public sealed class AutomatedRiskAssessmentHandlerTests
     {
         var now = DateTimeOffset.Parse("2026-07-28T00:01:00Z");
         var store = new RecordingAssessmentStore();
+        var audit = new RecordingAuditStore();
         var configuration = Configuration();
         var handler = new AutomatedRiskAssessmentHandler(
             new StubContextSource(null),
+            audit,
             new RiskEvidenceCollector(
                 new RecordingQuoteSource(),
                 new StubTokenEvidenceSource(now)),
@@ -79,6 +89,7 @@ public sealed class AutomatedRiskAssessmentHandlerTests
             CancellationToken.None);
 
         Assert.Null(store.Evaluation);
+        Assert.Empty(audit.Outcomes);
     }
 
     private static ProjectionEvent Projection(
@@ -228,6 +239,24 @@ public sealed class AutomatedRiskAssessmentHandlerTests
                 Guid.NewGuid(),
                 true,
                 true));
+        }
+    }
+
+    private sealed class RecordingAuditStore : IAutomatedAssessmentAuditStore
+    {
+        public List<AutomatedAssessmentOutcome> Outcomes { get; } = [];
+
+        public Task RecordAsync(
+            Guid rawEventId,
+            string poolAddress,
+            ulong slot,
+            AutomatedAssessmentOutcome outcome,
+            string? reason,
+            DateTimeOffset timestamp,
+            CancellationToken cancellationToken)
+        {
+            Outcomes.Add(outcome);
+            return Task.CompletedTask;
         }
     }
 }

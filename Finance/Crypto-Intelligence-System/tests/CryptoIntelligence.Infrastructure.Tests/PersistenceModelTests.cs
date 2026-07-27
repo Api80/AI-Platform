@@ -89,6 +89,10 @@ public sealed class PersistenceModelTests
         Assert.Contains("feature_snapshots", script, StringComparison.Ordinal);
         Assert.Contains("theme_matches", script, StringComparison.Ordinal);
         Assert.Contains("risk_assessments", script, StringComparison.Ordinal);
+        Assert.Contains(
+            "automated_assessment_attempts",
+            script,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -106,7 +110,8 @@ public sealed class PersistenceModelTests
             "token_candidates",
             "feature_snapshots",
             "theme_matches",
-            "risk_assessments"
+            "risk_assessments",
+            "automated_assessment_attempts"
         ];
 
         var actual = context.Model.GetEntityTypes()

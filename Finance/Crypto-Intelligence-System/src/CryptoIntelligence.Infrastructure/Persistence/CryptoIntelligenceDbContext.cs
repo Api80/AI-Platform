@@ -33,6 +33,8 @@ public sealed class CryptoIntelligenceDbContext(
     public DbSet<ThemeMatchEntity> ThemeMatches => Set<ThemeMatchEntity>();
     public DbSet<RiskAssessmentEntity> RiskAssessments =>
         Set<RiskAssessmentEntity>();
+    public DbSet<AutomatedAssessmentAttemptEntity> AutomatedAssessmentAttempts =>
+        Set<AutomatedAssessmentAttemptEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

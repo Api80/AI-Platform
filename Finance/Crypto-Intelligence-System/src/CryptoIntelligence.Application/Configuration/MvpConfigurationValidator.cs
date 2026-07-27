@@ -211,6 +211,15 @@ public static class MvpConfigurationValidator
                 configuration.Source.FallbackRpcSourceName,
                 "source.fallbackRpcSourceName",
                 errors);
+            if (string.Equals(
+                    configuration.Source.RpcSourceName,
+                    configuration.Source.FallbackRpcSourceName,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add(new ConfigurationError(
+                    "source.fallbackRpcSourceName",
+                    "Formal runs require distinct primary and fallback source names."));
+            }
 
             if (!configuration.Source.RequireReconciledData)
             {
@@ -218,6 +227,15 @@ public static class MvpConfigurationValidator
                     "source.requireReconciledData",
                     "Formal runs require reconciled data."));
             }
+        }
+
+        if (configuration.Acceptance.MinimumRunHours <= 0 ||
+            configuration.Acceptance.MinimumAutomatedAssessmentAttempts <= 0 ||
+            configuration.Acceptance.MinimumTerminalCoverageBasisPoints is < 1 or > 10_000)
+        {
+            errors.Add(new ConfigurationError(
+                "acceptance",
+                "M3 acceptance thresholds must be positive and coverage must be between 1 and 10000 basis points."));
         }
 
         return errors;

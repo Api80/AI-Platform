@@ -59,6 +59,17 @@ public sealed class HealthEndpointTests : IClassFixture<CryptoApiFactory>
     }
 
     [Fact]
+    public async Task M3_acceptance_rejects_future_window_before_database_query()
+    {
+        var future = Uri.EscapeDataString(
+            DateTimeOffset.UtcNow.AddDays(1).ToString("O"));
+        using var response = await _client.GetAsync(
+            $"/api/v1/operations/m3-acceptance?from={future}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Intelligence_evaluation_does_not_depend_on_postgresql()
     {
         var now = DateTimeOffset.Parse("2026-07-28T00:01:00Z");

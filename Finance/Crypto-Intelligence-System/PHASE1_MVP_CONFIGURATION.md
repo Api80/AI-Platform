@@ -114,6 +114,11 @@ risk:
     maximumTop10HoldingBasisPoints: null
     maximumEntryPriceImpactBasisPoints: 1000
     maximumMarketDataAgeSeconds: 5
+acceptance:
+  minimumRunHours: 168
+  minimumAutomatedAssessmentAttempts: 1
+  minimumTerminalCoverageBasisPoints: 9500
+  requireFallbackExercise: true
 
 entryStrategy:
   strategyName: EarlyMomentum

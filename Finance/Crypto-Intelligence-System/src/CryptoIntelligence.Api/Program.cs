@@ -24,6 +24,7 @@ builder.Services.AddSingleton(mvpConfiguration!);
 builder.Services.AddSingleton(configurationSnapshot);
 builder.Services.AddSingleton<IntelligenceEvaluationService>();
 builder.Services.AddScoped<IntelligenceAssessmentService>();
+builder.Services.AddScoped<M3AcceptanceService>();
 
 var connectionString =
     builder.Configuration.GetConnectionString("Postgres")
@@ -161,6 +162,32 @@ app.MapGet(
                     value.TotalBytes,
                     value.IsPartitioned))
                 .ToArray()));
+    });
+
+app.MapGet(
+    "/api/v1/operations/m3-acceptance",
+    async (
+        DateTimeOffset? from,
+        M3AcceptanceService service,
+        MvpConfiguration configuration,
+        CancellationToken cancellationToken) =>
+    {
+        var now = DateTimeOffset.UtcNow;
+        var windowStart = from ??
+            now.AddHours(-configuration.Acceptance.MinimumRunHours);
+        if (windowStart >= now)
+        {
+            return Results.BadRequest(new
+            {
+                error = "from must be earlier than the current time."
+            });
+        }
+
+        var report = await service.EvaluateAsync(
+            windowStart,
+            now,
+            cancellationToken);
+        return Results.Ok(report);
     });
 
 app.MapPost(
