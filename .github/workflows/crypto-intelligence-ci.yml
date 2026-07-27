@@ -1,0 +1,86 @@
+name: Crypto Intelligence CI
+
+on:
+  pull_request:
+    paths:
+      - "Finance/Crypto-Intelligence-System/**"
+      - ".github/workflows/crypto-intelligence-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "Finance/Crypto-Intelligence-System/**"
+      - ".github/workflows/crypto-intelligence-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-migrate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: crypto_intelligence_ci
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d crypto_intelligence_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: Finance/Crypto-Intelligence-System
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore tools
+        run: dotnet tool restore
+
+      - name: Restore
+        run: dotnet restore CryptoIntelligence.sln
+
+      - name: Verify format
+        run: dotnet format CryptoIntelligence.sln --verify-no-changes --no-restore
+
+      - name: Build
+        run: dotnet build CryptoIntelligence.sln --configuration Release --no-restore
+
+      - name: Test
+        run: >-
+          dotnet test CryptoIntelligence.sln
+          --configuration Release
+          --no-build
+          --collect:"XPlat Code Coverage"
+
+      - name: Verify migration script
+        run: >-
+          dotnet tool run dotnet-ef migrations script
+          --idempotent
+          --no-build
+          --configuration Release
+          --project src/CryptoIntelligence.Infrastructure/CryptoIntelligence.Infrastructure.csproj
+          --startup-project src/CryptoIntelligence.Infrastructure/CryptoIntelligence.Infrastructure.csproj
+          --output artifacts/schema.sql
+
+      - name: Apply migrations to empty PostgreSQL
+        env:
+          CRYPTO_DB_CONNECTION: >-
+            Host=127.0.0.1;Port=5432;Database=crypto_intelligence_ci;Username=postgres
+        run: >-
+          dotnet tool run dotnet-ef database update
+          --no-build
+          --configuration Release
+          --project src/CryptoIntelligence.Infrastructure/CryptoIntelligence.Infrastructure.csproj
+          --startup-project src/CryptoIntelligence.Infrastructure/CryptoIntelligence.Infrastructure.csproj

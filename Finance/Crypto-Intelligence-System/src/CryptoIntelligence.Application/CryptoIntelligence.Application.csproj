@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\CryptoIntelligence.Domain\CryptoIntelligence.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

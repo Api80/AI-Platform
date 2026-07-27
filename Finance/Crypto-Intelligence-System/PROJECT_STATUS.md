@@ -1,8 +1,8 @@
 # Crypto Intelligence System Project Status
 
 > 更新时间：2026-07-28  
-> 状态：M0 Adapter Selection Spike 已完成，Ready for M1 Foundation
-> 代码实施进度：Adapter Spike 原型完成，正式 MVP 工程尚未开始
+> 状态：M0 已完成，M1 Foundation 开发中
+> 代码实施进度：正式 .NET Solution、配置、数据库和可观测性骨架已建立
 
 ## 1. Project Positioning
 
@@ -121,8 +121,8 @@ Phase 1 实际开发以 MVP Implementation Baseline 为准；长期设计用于�
 | Strategy validation protocol | Completed | 尚无真实样本 |
 | Phase 1 MVP detailed design | Completed | MVP Design、Configuration 和 Implementation Plan 已完成 |
 | Adapter selection spike | Completed | Raydium LaunchLab + CPMM，10 个离线 Fixtures 和实时发现/补采验证通过 |
-| Solution/code | In progress | M0 .NET 原型完成；M1 正式 Solution 尚未创建 |
-| Database migrations | Not started | 等待 MVP 物理模型 |
+| Solution/code | In progress | M1 正式 Solution、API、Worker 和模块边界已创建 |
+| Database migrations | In progress | Migration 001 已生成；等待 CI 空库执行 |
 | Historical replay | Not started | 依赖 Adapter 和 Raw Event Store |
 | Forward paper | Not started | 依赖前序 Milestone |
 | Dashboard | Not started | 只计划最小查询和监控能力 |
