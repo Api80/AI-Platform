@@ -22,6 +22,15 @@ public sealed class CryptoIntelligenceDbContext(
     public DbSet<NormalizedDomainEventEntity> NormalizedDomainEvents =>
         Set<NormalizedDomainEventEntity>();
 
+    public DbSet<TokenEntity> Tokens => Set<TokenEntity>();
+    public DbSet<LiquidityPoolEntity> LiquidityPools => Set<LiquidityPoolEntity>();
+    public DbSet<WalletEntity> Wallets => Set<WalletEntity>();
+    public DbSet<SwapEventEntity> SwapEvents => Set<SwapEventEntity>();
+    public DbSet<LiquidityEventEntity> LiquidityEvents => Set<LiquidityEventEntity>();
+    public DbSet<MarketSnapshotEntity> MarketSnapshots => Set<MarketSnapshotEntity>();
+    public DbSet<TokenCandidateEntity> TokenCandidates => Set<TokenCandidateEntity>();
+    public DbSet<FeatureSnapshotEntity> FeatureSnapshots => Set<FeatureSnapshotEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var configuration = modelBuilder.Entity<ConfigurationSnapshotEntity>();
@@ -58,5 +67,6 @@ public sealed class CryptoIntelligenceDbContext(
             .HasDatabaseName("ix_configuration_snapshots_version_created");
 
         modelBuilder.ConfigureIngestion();
+        modelBuilder.ConfigureRadar();
     }
 }

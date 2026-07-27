@@ -11,6 +11,8 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
         "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
     private const string Token2022ProgramId =
         "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
+    private const string LaunchLabProgramId =
+        "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj";
     private const string CpmmProgramId =
         "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C";
 
@@ -108,8 +110,10 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
                 .Select(value => value.GetString() ?? string.Empty)
                 .ToArray());
         var decoded = MergeEventRepresentations(instructionEvents, logEvents);
+        var derived = DeriveInstructionEvents(instructions);
         var events = decoded
-            .Concat(DeriveInstructionEvents(instructions, decoded))
+            .Where(value => value.Source == "TokenInstruction")
+            .Concat(derived)
             .Select((value, index) => new ParsedAdapterEvent(
                 value.ProgramId,
                 value.Name,
@@ -118,7 +122,8 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
                 index,
                 value.DomainEventType,
                 value.Source,
-                value.PayloadFingerprint))
+                value.PayloadFingerprint,
+                value.Attributes))
             .ToArray();
         return new AdapterParseResult(slot, false, ParserVersion, events);
     }
@@ -184,7 +189,13 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
                 programId,
                 name,
                 outerInstructionIndex,
-                innerInstructionIndex));
+                innerInstructionIndex,
+                BuildInstructionAttributes(
+                    programId,
+                    name,
+                    instruction,
+                    accountKeys,
+                    data)));
             return;
         }
 
@@ -200,7 +211,8 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
                 innerInstructionIndex,
                 MapDomainEvent(eventName),
                 "SelfCpi",
-                Fingerprint(data.AsSpan(8))));
+                Fingerprint(data.AsSpan(8)),
+                null));
             return;
         }
 
@@ -242,7 +254,8 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
             innerInstructionIndex,
             eventType,
             "TokenInstruction",
-            $"instruction:{outerInstructionIndex}:{innerInstructionIndex}"));
+            $"instruction:{outerInstructionIndex}:{innerInstructionIndex}",
+            null));
     }
 
     private IReadOnlyList<DecodedEvent> LocateProgramDataEvents(
@@ -283,7 +296,8 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
                     null,
                     MapDomainEvent(eventName),
                     "ProgramData",
-                    Fingerprint(data)));
+                    Fingerprint(data),
+                    null));
             }
         }
 
@@ -315,28 +329,46 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
     }
 
     private static IReadOnlyList<DecodedEvent> DeriveInstructionEvents(
-        IReadOnlyList<DecodedInstruction> instructions,
-        IReadOnlyList<DecodedEvent> decodedEvents)
+        IReadOnlyList<DecodedInstruction> instructions)
     {
         var result = new List<DecodedEvent>();
-        var hasPoolCreated = decodedEvents.Any(value =>
-            value.DomainEventType == "PoolCreated");
-        var hasLiquidityChanged = decodedEvents.Any(value =>
-            value.DomainEventType == "LiquidityChanged");
-        foreach (var instruction in instructions.Where(value =>
-                     value.ProgramId == CpmmProgramId &&
-                     value.Name == "initialize"))
+        foreach (var instruction in instructions)
         {
-            if (!hasPoolCreated)
+            if (instruction.ProgramId == LaunchLabProgramId)
             {
-                result.Add(Derived(instruction, "PoolCreated"));
-                hasPoolCreated = true;
+                switch (instruction.Name)
+                {
+                    case "initialize":
+                        result.Add(Derived(instruction, "MintCreated"));
+                        result.Add(Derived(instruction, "PoolCreated"));
+                        break;
+                    case "buy_exact_in":
+                    case "sell_exact_in":
+                        result.Add(Derived(instruction, "SwapObserved"));
+                        break;
+                    case "migrate_to_cpswap":
+                        result.Add(Derived(instruction, "PoolCreated"));
+                        result.Add(Derived(instruction, "LiquidityChanged"));
+                        break;
+                }
             }
 
-            if (!hasLiquidityChanged)
+            if (instruction.ProgramId == CpmmProgramId)
             {
-                result.Add(Derived(instruction, "LiquidityChanged"));
-                hasLiquidityChanged = true;
+                switch (instruction.Name)
+                {
+                    case "initialize":
+                        result.Add(Derived(instruction, "PoolCreated"));
+                        result.Add(Derived(instruction, "LiquidityChanged"));
+                        break;
+                    case "swap_base_input":
+                        result.Add(Derived(instruction, "SwapObserved"));
+                        break;
+                    case "deposit":
+                    case "withdraw":
+                        result.Add(Derived(instruction, "LiquidityChanged"));
+                        break;
+                }
             }
         }
 
@@ -352,7 +384,102 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
         instruction.InnerInstructionIndex,
         eventType,
         "InstructionDerived",
-        $"instruction:{instruction.OuterInstructionIndex}:{instruction.InnerInstructionIndex}");
+        $"instruction:{instruction.OuterInstructionIndex}:{instruction.InnerInstructionIndex}",
+        instruction.Attributes);
+
+    private static IReadOnlyDictionary<string, string> BuildInstructionAttributes(
+        string programId,
+        string name,
+        JsonElement instruction,
+        IReadOnlyList<string> accountKeys,
+        ReadOnlySpan<byte> data)
+    {
+        var accounts = instruction.GetProperty("accounts")
+            .EnumerateArray()
+            .Select(value => accountKeys[value.GetInt32()])
+            .ToArray();
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        if (programId == LaunchLabProgramId)
+        {
+            switch (name)
+            {
+                case "initialize" when accounts.Length >= 8:
+                    AddCore(values, accounts[5], accounts[6], accounts[7], accounts[1]);
+                    break;
+                case "buy_exact_in" when accounts.Length >= 11:
+                    AddCore(values, accounts[4], accounts[9], accounts[10], accounts[0]);
+                    values["side"] = "Buy";
+                    values["quote_amount"] = U64(data, 8).ToString();
+                    values["base_amount"] = U64(data, 16).ToString();
+                    break;
+                case "sell_exact_in" when accounts.Length >= 11:
+                    AddCore(values, accounts[4], accounts[9], accounts[10], accounts[0]);
+                    values["side"] = "Sell";
+                    values["base_amount"] = U64(data, 8).ToString();
+                    values["quote_amount"] = U64(data, 16).ToString();
+                    break;
+                case "migrate_to_cpswap" when accounts.Length >= 6:
+                    AddCore(values, accounts[5], accounts[1], accounts[2], accounts[0]);
+                    values["change_type"] = "Initialized";
+                    break;
+            }
+        }
+
+        if (programId == CpmmProgramId)
+        {
+            switch (name)
+            {
+                case "initialize" when accounts.Length >= 6:
+                    AddCore(values, accounts[3], accounts[4], accounts[5], accounts[0]);
+                    values["base_reserve"] = U64(data, 8).ToString();
+                    values["quote_reserve"] = U64(data, 16).ToString();
+                    values["base_amount"] = values["base_reserve"];
+                    values["quote_amount"] = values["quote_reserve"];
+                    values["change_type"] = "Initialized";
+                    break;
+                case "swap_base_input" when accounts.Length >= 12:
+                    AddCore(values, accounts[3], accounts[10], accounts[11], accounts[0]);
+                    values["base_amount"] = U64(data, 8).ToString();
+                    values["quote_amount"] = U64(data, 16).ToString();
+                    values["side"] = "Unknown";
+                    break;
+                case "deposit" when accounts.Length >= 13:
+                    AddCore(values, accounts[2], accounts[10], accounts[11], accounts[0]);
+                    values["base_amount"] = U64(data, 16).ToString();
+                    values["quote_amount"] = U64(data, 24).ToString();
+                    values["change_type"] = "Added";
+                    break;
+                case "withdraw" when accounts.Length >= 13:
+                    AddCore(values, accounts[2], accounts[10], accounts[11], accounts[0]);
+                    values["base_amount"] = U64(data, 16).ToString();
+                    values["quote_amount"] = U64(data, 24).ToString();
+                    values["change_type"] = "Removed";
+                    break;
+            }
+        }
+
+        return values;
+    }
+
+    private static void AddCore(
+        IDictionary<string, string> values,
+        string pool,
+        string baseMint,
+        string quoteMint,
+        string trader)
+    {
+        values["pool_address"] = pool;
+        values["base_mint"] = baseMint;
+        values["quote_mint"] = quoteMint;
+        values["trader"] = trader;
+    }
+
+    private static ulong U64(ReadOnlySpan<byte> data, int offset) =>
+        data.Length >= offset + sizeof(ulong)
+            ? System.Buffers.Binary.BinaryPrimitives.ReadUInt64LittleEndian(
+                data.Slice(offset, sizeof(ulong)))
+            : 0;
 
     private static bool TryReadInvokedProgram(string message, out string programId)
     {
@@ -432,7 +559,8 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
         string ProgramId,
         string Name,
         int OuterInstructionIndex,
-        int? InnerInstructionIndex);
+        int? InnerInstructionIndex,
+        IReadOnlyDictionary<string, string> Attributes);
 
     private sealed record DecodedEvent(
         string ProgramId,
@@ -441,7 +569,8 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
         int? InnerInstructionIndex,
         string DomainEventType,
         string Source,
-        string PayloadFingerprint);
+        string PayloadFingerprint,
+        IReadOnlyDictionary<string, string>? Attributes);
 }
 
 internal sealed class DiscriminatorRegistry

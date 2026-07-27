@@ -65,6 +65,14 @@ public static class MvpConfigurationValidator
                 "Minimum observation time must be greater than zero."));
         }
 
+        if (configuration.Radar.FeatureWindowsSeconds.Count == 0 ||
+            configuration.Radar.FeatureWindowsSeconds.Any(value => value <= 0))
+        {
+            errors.Add(new ConfigurationError(
+                "radar.featureWindowsSeconds",
+                "At least one positive feature window is required."));
+        }
+
         if (configuration.Radar.MaximumEntryAgeSeconds >
             configuration.Radar.MaximumCandidateAgeSeconds)
         {

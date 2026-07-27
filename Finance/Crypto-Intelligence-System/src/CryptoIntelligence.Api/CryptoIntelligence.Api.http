@@ -15,3 +15,13 @@ Accept: application/json
 X-Correlation-ID: local-status-check
 
 ###
+
+GET {{HostAddress}}/api/v1/radar/candidates?status=Eligible&limit=50
+Accept: application/json
+
+###
+
+GET {{HostAddress}}/api/v1/radar/candidates/{{tokenAddress}}
+Accept: application/json
+
+###

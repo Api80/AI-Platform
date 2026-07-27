@@ -1,5 +1,6 @@
 using CryptoIntelligence.Application.Configuration;
 using CryptoIntelligence.Application.Ingestion;
+using CryptoIntelligence.Application.Radar;
 using CryptoIntelligence.Infrastructure.Persistence;
 using CryptoIntelligence.Infrastructure.Solana;
 using CryptoIntelligence.Infrastructure.Solana.Raydium;
@@ -28,6 +29,7 @@ var connectionString =
         "or CRYPTO_DB_CONNECTION.");
 builder.Services.AddCryptoIntelligencePersistence(connectionString);
 builder.Services.AddScoped<IRawEventHandler, SolanaAdapterRawEventHandler>();
+builder.Services.AddScoped<IProjectionEventHandler, RadarProjectionHandler>();
 builder.Services.AddScoped<DurableRawEventDispatcher>();
 ConfigureSolanaSources(builder.Services, mvpConfiguration);
 builder.Services.AddHostedService<Worker>();

@@ -36,7 +36,7 @@ public sealed class HealthEndpointTests : IClassFixture<CryptoApiFactory>
             "/api/v1/system/status");
 
         Assert.NotNull(response);
-        Assert.Equal("M1 Foundation", response.Milestone);
+        Assert.Equal("M2 New Token Radar", response.Milestone);
         Assert.Equal("phase1-mvp-research-v1", response.ConfigurationVersion);
         Assert.Equal(64, response.ConfigurationHash.Length);
     }
@@ -47,6 +47,15 @@ public sealed class HealthEndpointTests : IClassFixture<CryptoApiFactory>
         using var response = await _client.GetAsync("/health/ready");
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Radar_rejects_unknown_candidate_status_before_database_query()
+    {
+        using var response = await _client.GetAsync(
+            "/api/v1/radar/candidates?status=not-a-state");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 }
 

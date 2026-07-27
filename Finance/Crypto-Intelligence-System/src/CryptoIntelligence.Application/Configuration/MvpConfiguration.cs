@@ -44,6 +44,9 @@ public sealed class SourceConfiguration
 
 public sealed class RadarConfiguration
 {
+    public IReadOnlyList<int> FeatureWindowsSeconds { get; init; } =
+        [15, 30, 60, 180];
+
     public int MinimumObservationSeconds { get; init; } = 30;
 
     public int MaximumCandidateAgeSeconds { get; init; } = 600;

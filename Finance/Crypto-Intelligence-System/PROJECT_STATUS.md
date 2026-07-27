@@ -2,7 +2,7 @@
 
 > 更新时间：2026-07-28  
 > 状态：M0/M1 已完成，M2 Reliable Ingestion 开发中
-> 代码实施进度：M2A 已完成；M2B 正在接入 Solana Source 和正式 Raydium Adapter
+> 代码实施进度：M2A/M2B 已完成；M2C 已完成开发和本地验证，等待 PR 评审
 
 ## 1. Project Positioning
 
@@ -121,8 +121,8 @@ Phase 1 实际开发以 MVP Implementation Baseline 为准；长期设计用于�
 | Strategy validation protocol | Completed | 尚无真实样本 |
 | Phase 1 MVP detailed design | Completed | MVP Design、Configuration 和 Implementation Plan 已完成 |
 | Adapter selection spike | Completed | Raydium LaunchLab + CPMM，10 个离线 Fixtures 和实时发现/补采验证通过 |
-| Solution/code | In progress | M2A 已完成；M2B WebSocket/RPC/Adapter 开发中 |
-| Database migrations | In progress | Migration 001/002 已验证；Migration 003 增加标准化事件 |
+| Solution/code | In progress | M2C Radar 投影、候选状态机、滚动指标和 Replay 已完成本地验证 |
+| Database migrations | In progress | Migration 001-004 已生成并验证；Migration 004 增加 Radar 读模型 |
 | Historical replay | Not started | 依赖 Adapter 和 Raw Event Store |
 | Forward paper | Not started | 依赖前序 Milestone |
 | Dashboard | Not started | 只计划最小查询和监控能力 |
