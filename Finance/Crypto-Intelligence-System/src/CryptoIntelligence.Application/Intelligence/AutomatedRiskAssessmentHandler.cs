@@ -34,6 +34,7 @@ public sealed class RiskEvidenceTemporarilyUnavailableException(string message)
 
 public sealed class AutomatedRiskAssessmentHandler(
     IAutomatedAssessmentContextSource contexts,
+    IAutomatedAssessmentAuditStore audit,
     RiskEvidenceCollector evidenceCollector,
     IntelligenceAssessmentService assessments,
     MvpConfiguration configuration)
@@ -78,6 +79,14 @@ public sealed class AutomatedRiskAssessmentHandler(
         }
 
         Attempted.Add(1);
+        await audit.RecordAsync(
+            projectionEvent.RawEventId,
+            poolAddress,
+            projectionEvent.Slot,
+            AutomatedAssessmentOutcome.Attempted,
+            reason: null,
+            DateTimeOffset.UtcNow,
+            cancellationToken);
         var context = await contexts.LoadAsync(
             poolAddress,
             projectionEvent.Event.ProgramId,
@@ -85,13 +94,20 @@ public sealed class AutomatedRiskAssessmentHandler(
             cancellationToken);
         if (context is null)
         {
-            throw DeferredException("Pool/candidate projection is not available.");
+            throw await DeferredExceptionAsync(
+                projectionEvent,
+                poolAddress,
+                "Pool/candidate projection is not available.",
+                cancellationToken);
         }
 
         if (configuration.FormalRun && !context.IsReconciled)
         {
-            throw DeferredException(
-                "The finalized slot has not reached the reconciled watermark.");
+            throw await DeferredExceptionAsync(
+                projectionEvent,
+                poolAddress,
+                "The finalized slot has not reached the reconciled watermark.",
+                cancellationToken);
         }
 
         if (!TryBuildSnapshot(
@@ -104,6 +120,14 @@ public sealed class AutomatedRiskAssessmentHandler(
                 out var reason))
         {
             Unsupported.Add(1, Tag(reason));
+            await audit.RecordAsync(
+                projectionEvent.RawEventId,
+                poolAddress,
+                projectionEvent.Slot,
+                AutomatedAssessmentOutcome.Unsupported,
+                reason,
+                DateTimeOffset.UtcNow,
+                cancellationToken);
             return;
         }
 
@@ -133,8 +157,11 @@ public sealed class AutomatedRiskAssessmentHandler(
             collected.Holders.Availability ==
             EvidenceAvailability.TemporarilyUnavailable)
         {
-            throw DeferredException(
-                "Solana authority or holder evidence is temporarily unavailable.");
+            throw await DeferredExceptionAsync(
+                projectionEvent,
+                poolAddress,
+                "Solana authority or holder evidence is temporarily unavailable.",
+                cancellationToken);
         }
 
         await assessments.EvaluateAndSaveAsync(
@@ -149,7 +176,20 @@ public sealed class AutomatedRiskAssessmentHandler(
                     snapshot.OutputReserveRaw > 0,
                 collected.Snapshot),
             cancellationToken);
-        Completed.Add(1);
+        await audit.RecordAsync(
+            projectionEvent.RawEventId,
+            poolAddress,
+            projectionEvent.Slot,
+            reason == "available"
+                ? AutomatedAssessmentOutcome.Completed
+                : AutomatedAssessmentOutcome.Unsupported,
+            reason,
+            DateTimeOffset.UtcNow,
+            cancellationToken);
+        if (reason == "available")
+        {
+            Completed.Add(1);
+        }
     }
 
     private static bool TryBuildSnapshot(
@@ -265,10 +305,22 @@ public sealed class AutomatedRiskAssessmentHandler(
         return true;
     }
 
-    private RiskEvidenceTemporarilyUnavailableException DeferredException(
-        string message)
+    private async Task<RiskEvidenceTemporarilyUnavailableException>
+        DeferredExceptionAsync(
+            ProjectionEvent projectionEvent,
+            string poolAddress,
+            string message,
+            CancellationToken cancellationToken)
     {
         Deferred.Add(1);
+        await audit.RecordAsync(
+            projectionEvent.RawEventId,
+            poolAddress,
+            projectionEvent.Slot,
+            AutomatedAssessmentOutcome.Deferred,
+            message,
+            DateTimeOffset.UtcNow,
+            cancellationToken);
         return new RiskEvidenceTemporarilyUnavailableException(message);
     }
 

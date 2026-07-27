@@ -13,6 +13,102 @@ public sealed class PostgresIntelligenceAssessmentStoreTests
 {
     [Fact]
     [Trait("Category", "Postgres")]
+    public async Task Assessment_audit_preserves_retries_and_feeds_acceptance()
+    {
+        var connectionString =
+            Environment.GetEnvironmentVariable("CRYPTO_TEST_DB_CONNECTION");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<CryptoIntelligenceDbContext>()
+            .UseNpgsql(connectionString)
+            .Options;
+        await using var context = new CryptoIntelligenceDbContext(options);
+        await using var transaction =
+            await context.Database.BeginTransactionAsync();
+        var now = DateTimeOffset.Parse("2026-07-28T03:00:00Z");
+        var raw = new RawBlockchainEventEntity
+        {
+            Id = Guid.NewGuid(),
+            EventId = Guid.NewGuid().ToString("N"),
+            Chain = "Solana",
+            Network = "mainnet-beta",
+            Slot = 456,
+            TransactionSignature = $"signature-{Guid.NewGuid():N}",
+            InstructionIndex = -1,
+            ProgramId = "program",
+            EventType = "SolanaTransaction",
+            EventOrdinal = 0,
+            EventTime = now.AddHours(-2),
+            ObservedTime = now.AddHours(-2),
+            CommitmentLevel = "finalized",
+            CanonicalStatus = CanonicalStatus.Finalized,
+            FinalityUpdatedTime = now.AddHours(-2),
+            Source = "fallback",
+            RawPayload = "{}",
+            SchemaVersion = "solana-transaction-v1",
+            ProcessingStatus = ProcessingStatus.Completed,
+            RetryCount = 1,
+            CreatedTime = now.AddHours(-2),
+            UpdatedTime = now
+        };
+        context.RawBlockchainEvents.Add(raw);
+        await context.SaveChangesAsync();
+        var audit = new PostgresAutomatedAssessmentAuditStore(context);
+
+        await audit.RecordAsync(
+            raw.Id,
+            "pool",
+            456,
+            AutomatedAssessmentOutcome.Attempted,
+            null,
+            now.AddHours(-2),
+            CancellationToken.None);
+        await audit.RecordAsync(
+            raw.Id,
+            "pool",
+            456,
+            AutomatedAssessmentOutcome.Deferred,
+            "temporary",
+            now.AddHours(-1),
+            CancellationToken.None);
+        await audit.RecordAsync(
+            raw.Id,
+            "pool",
+            456,
+            AutomatedAssessmentOutcome.Attempted,
+            null,
+            now.AddMinutes(-1),
+            CancellationToken.None);
+        await audit.RecordAsync(
+            raw.Id,
+            "pool",
+            456,
+            AutomatedAssessmentOutcome.Completed,
+            "available",
+            now,
+            CancellationToken.None);
+        var facts = await new PostgresM3AcceptanceQuery(context).LoadAsync(
+            now.AddHours(-3),
+            "fallback",
+            CancellationToken.None);
+
+        Assert.Equal(1, facts.Attempted);
+        Assert.Equal(1, facts.Completed);
+        Assert.Equal(0, facts.Deferred);
+        Assert.Equal(1, facts.DeferredOccurrences);
+        Assert.Equal(1, facts.RetriedRawEvents);
+        Assert.Equal(1, facts.FallbackRawEvents);
+        var stored = Assert.Single(context.AutomatedAssessmentAttempts);
+        Assert.Equal(2, stored.AttemptCount);
+        Assert.Equal(1, stored.DeferredCount);
+        await transaction.RollbackAsync();
+    }
+
+    [Fact]
+    [Trait("Category", "Postgres")]
     public async Task Finality_promotion_requeues_completed_transaction_once()
     {
         var connectionString =

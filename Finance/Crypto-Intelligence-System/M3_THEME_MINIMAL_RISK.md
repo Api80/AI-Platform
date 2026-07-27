@@ -1,6 +1,6 @@
 # M3 Theme and Minimal Risk
 
-> 状态：M3A-M3D code complete；Docker PostgreSQL 验证通过；真实 Solana RPC 连续运行验收待完成
+> 状态：M3A-M3D code complete；M3E 验收能力已完成本地验证；真实 Solana RPC 连续运行验收待完成
 
 ## 目标
 
@@ -156,14 +156,23 @@ Finalized CPMM Swap
 
 因此当前 Sell Quote 组件只接受可信的 Pool Snapshot 输入，不能宣称已形成可执行的真实链上报价。缺失证据仍会得到 Missing + Hard Reject，调用方不能伪造证据把候选送入策略。
 
-## 下一增量
+## M3E 验收能力已实现
 
-M3 Exit Gate / M3E 将执行：
+代码已增加：
+
+- Formal Run 缺少主/备 RPC、主备 URL 相同或 Source Name 相同时拒绝启动；
+- `automated_assessment_attempts` 持久化 Attempted、Deferred、Unsupported、Completed 和重试历史；
+- `GET /api/v1/operations/m3-acceptance?from=<T0>` 生成固定窗口机器验收报告；
+- 自动检查连续时长、Terminal Coverage、Gap、Dead Letter、Checkpoint 水位和备用 RPC 演练；
+- Migration 007 已在 Docker PostgreSQL 16 验证。
+
+实际 Exit Gate 仍待执行：
 
 - 配置付费主 RPC 和独立备用 RPC；
-- 连续运行并核对 Authority、Holder、Vault 和 Quote；
-- 统计 Completed/Deferred/Unsupported 覆盖率；
-- 确认 Hard Reject、Retry 和 Dead Letter 符合预期；
-- 通过后进入 M4 Early Momentum Strategy 和 Historical Replay。
+- 固定 T0 连续运行七天；
+- 对 Authority、Holder、Vault 和 Quote 完成人工抽样核对；
+- 机器检查与人工检查均通过后进入 M4 Early Momentum Strategy 和 Historical Replay。
+
+详细步骤见 `M3E_LIVE_RPC_ACCEPTANCE.md`。
 
 在 M3E 通过前，系统不能宣称已完成生产级真实链上风险闭环，也不能进入真实交易。

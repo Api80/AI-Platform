@@ -31,6 +31,10 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<
             IAutomatedAssessmentContextSource,
             PostgresAutomatedAssessmentContextSource>();
+        services.AddScoped<
+            IAutomatedAssessmentAuditStore,
+            PostgresAutomatedAssessmentAuditStore>();
+        services.AddScoped<IM3AcceptanceQuery, PostgresM3AcceptanceQuery>();
         return services;
     }
 }

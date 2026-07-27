@@ -167,3 +167,20 @@ public sealed class RiskAssessmentEntity
     public required string RiskModelVersion { get; set; }
     public DateTimeOffset CreatedTime { get; set; }
 }
+
+public sealed class AutomatedAssessmentAttemptEntity
+{
+    public Guid Id { get; set; }
+    public Guid RawEventId { get; set; }
+    public required string PoolAddress { get; set; }
+    public long Slot { get; set; }
+    public CryptoIntelligence.Application.Intelligence.AutomatedAssessmentOutcome
+        Outcome
+    { get; set; }
+    public string? Reason { get; set; }
+    public int AttemptCount { get; set; }
+    public int DeferredCount { get; set; }
+    public DateTimeOffset FirstAttemptTime { get; set; }
+    public DateTimeOffset LastAttemptTime { get; set; }
+    public DateTimeOffset? CompletedTime { get; set; }
+}

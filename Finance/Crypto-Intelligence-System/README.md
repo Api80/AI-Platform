@@ -16,7 +16,7 @@ Crypto Intelligence System 是 AI Platform 在金融领域的一个链上智能�
 
 ## 当前进度
 
-当前状态：`M2 代码出口完成、真实运行验收待执行；M3A-M3C 已合并；M3D 自动风险链路已完成 Docker PostgreSQL 验证`。
+当前状态：`M2 代码出口完成、真实运行验收待执行；M3A-M3D 已合并；M3E 正式运行保护、审计和验收报告已完成本地验证`。
 
 - [PROJECT_STATUS.md](./PROJECT_STATUS.md)  
   当前项目情况、已完成设计、实施状态、风险和下一步。
@@ -34,6 +34,9 @@ Crypto Intelligence System 是 AI Platform 在金融领域的一个链上智能�
 
 - [M3_THEME_MINIMAL_RISK.md](./M3_THEME_MINIMAL_RISK.md)
   M3A-D 规则、证据、持久化、Finalized 自动评估链路及真实运行验收边界。
+
+- [M3E_LIVE_RPC_ACCEPTANCE.md](./M3E_LIVE_RPC_ACCEPTANCE.md)
+  M3E 正式启动条件、机器验收报告、备用 RPC 演练、七天留档和人工证据抽样。
 
 ## Phase 1 MVP 实施基线
 

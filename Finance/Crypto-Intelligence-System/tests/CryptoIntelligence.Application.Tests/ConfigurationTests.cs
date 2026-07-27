@@ -71,6 +71,42 @@ public sealed class ConfigurationTests
     }
 
     [Fact]
+    public void Formal_run_requires_distinct_source_names()
+    {
+        var original = ValidConfiguration();
+        var configuration = new MvpConfiguration
+        {
+            ConfigurationVersion = original.ConfigurationVersion,
+            FormalRun = true,
+            Source = new SourceConfiguration
+            {
+                LaunchAdapter = original.Source.LaunchAdapter,
+                PoolAdapter = original.Source.PoolAdapter,
+                AdapterVersion = original.Source.AdapterVersion,
+                LaunchLabParserVersion = original.Source.LaunchLabParserVersion,
+                CpmmParserVersion = original.Source.CpmmParserVersion,
+                ProgramIds = original.Source.ProgramIds,
+                FixtureCoverageStartSlot =
+                    original.Source.FixtureCoverageStartSlot,
+                HistoricalRunStartSlot = 1,
+                RpcSourceName = "same",
+                FallbackRpcSourceName = "same",
+                RequireReconciledData = true
+            },
+            Radar = original.Radar,
+            Storage = original.Storage,
+            Theme = original.Theme,
+            Risk = original.Risk
+        };
+
+        var errors = MvpConfigurationValidator.Validate(configuration);
+
+        Assert.Contains(
+            errors,
+            error => error.Path == "source.fallbackRpcSourceName");
+    }
+
+    [Fact]
     public void Invalid_backfill_and_storage_limits_are_rejected()
     {
         var original = ValidConfiguration();

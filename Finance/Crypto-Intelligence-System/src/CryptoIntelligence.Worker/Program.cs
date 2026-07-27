@@ -57,24 +57,20 @@ static void ConfigureSolanaSources(
     IServiceCollection services,
     MvpConfiguration configuration)
 {
-    var webSocketUrl = Environment.GetEnvironmentVariable("SOLANA_RPC_WS_URL");
-    var primaryHttpUrl = Environment.GetEnvironmentVariable("SOLANA_RPC_HTTP_URL");
-    if (string.IsNullOrWhiteSpace(webSocketUrl) ||
-        string.IsNullOrWhiteSpace(primaryHttpUrl))
+    var endpoints = SolanaRuntimeEndpoints.Create(
+        configuration,
+        Environment.GetEnvironmentVariable("SOLANA_RPC_WS_URL"),
+        Environment.GetEnvironmentVariable("SOLANA_RPC_HTTP_URL"),
+        Environment.GetEnvironmentVariable("SOLANA_RPC_FALLBACK_HTTP_URL"));
+    if (endpoints is null)
     {
         return;
     }
 
-    var webSocketEndpoint = RequireEndpoint(webSocketUrl, "SOLANA_RPC_WS_URL", "ws", "wss");
-    var primaryEndpoint = RequireEndpoint(
-        primaryHttpUrl,
-        "SOLANA_RPC_HTTP_URL",
-        Uri.UriSchemeHttp,
-        Uri.UriSchemeHttps);
     services.AddSingleton<IDiscoveryConnectionObserver, LoggingDiscoveryConnectionObserver>();
     services.AddSingleton<ISolanaDiscoverySource>(provider =>
         new SolanaWebSocketDiscoverySource(
-            webSocketEndpoint,
+            endpoints.WebSocket,
             configuration.Source.ProgramIds,
             configuration.Source.DiscoveryCommitment,
             provider.GetRequiredService<IDiscoveryConnectionObserver>()));
@@ -82,18 +78,12 @@ static void ConfigureSolanaSources(
     {
         var sources = new List<ISolanaTransactionSource>
         {
-            CreateRpcSource(primaryEndpoint, configuration.Source.RpcSourceName)
+            CreateRpcSource(endpoints.PrimaryHttp, configuration.Source.RpcSourceName)
         };
-        var fallbackUrl = Environment.GetEnvironmentVariable(
-            "SOLANA_RPC_FALLBACK_HTTP_URL");
-        if (!string.IsNullOrWhiteSpace(fallbackUrl))
+        if (endpoints.FallbackHttp is not null)
         {
             sources.Add(CreateRpcSource(
-                RequireEndpoint(
-                    fallbackUrl,
-                    "SOLANA_RPC_FALLBACK_HTTP_URL",
-                    Uri.UriSchemeHttp,
-                    Uri.UriSchemeHttps),
+                endpoints.FallbackHttp,
                 configuration.Source.FallbackRpcSourceName ?? "fallback"));
         }
 
@@ -103,18 +93,12 @@ static void ConfigureSolanaSources(
     {
         var sources = new List<ISolanaBackfillSource>
         {
-            CreateBackfillSource(primaryEndpoint, configuration.Source.RpcSourceName)
+            CreateBackfillSource(endpoints.PrimaryHttp, configuration.Source.RpcSourceName)
         };
-        var fallbackUrl = Environment.GetEnvironmentVariable(
-            "SOLANA_RPC_FALLBACK_HTTP_URL");
-        if (!string.IsNullOrWhiteSpace(fallbackUrl))
+        if (endpoints.FallbackHttp is not null)
         {
             sources.Add(CreateBackfillSource(
-                RequireEndpoint(
-                    fallbackUrl,
-                    "SOLANA_RPC_FALLBACK_HTTP_URL",
-                    Uri.UriSchemeHttp,
-                    Uri.UriSchemeHttps),
+                endpoints.FallbackHttp,
                 configuration.Source.FallbackRpcSourceName ?? "fallback"));
         }
 
@@ -125,19 +109,13 @@ static void ConfigureSolanaSources(
         var sources = new List<ISolanaTokenRiskEvidenceSource>
         {
             CreateTokenEvidenceSource(
-                primaryEndpoint,
+                endpoints.PrimaryHttp,
                 configuration.Source.RpcSourceName)
         };
-        var fallbackUrl = Environment.GetEnvironmentVariable(
-            "SOLANA_RPC_FALLBACK_HTTP_URL");
-        if (!string.IsNullOrWhiteSpace(fallbackUrl))
+        if (endpoints.FallbackHttp is not null)
         {
             sources.Add(CreateTokenEvidenceSource(
-                RequireEndpoint(
-                    fallbackUrl,
-                    "SOLANA_RPC_FALLBACK_HTTP_URL",
-                    Uri.UriSchemeHttp,
-                    Uri.UriSchemeHttps),
+                endpoints.FallbackHttp,
                 configuration.Source.FallbackRpcSourceName ?? "fallback"));
         }
 
@@ -166,7 +144,6 @@ static SolanaRpcBackfillSource CreateBackfillSource(
             Timeout = TimeSpan.FromSeconds(30)
         },
         sourceName);
-
 static SolanaTokenRiskEvidenceSource CreateTokenEvidenceSource(
     Uri endpoint,
     string sourceName) =>
@@ -177,18 +154,3 @@ static SolanaTokenRiskEvidenceSource CreateTokenEvidenceSource(
             Timeout = TimeSpan.FromSeconds(30)
         },
         sourceName);
-
-static Uri RequireEndpoint(
-    string value,
-    string variableName,
-    params string[] allowedSchemes)
-{
-    if (!Uri.TryCreate(value, UriKind.Absolute, out var endpoint) ||
-        !allowedSchemes.Contains(endpoint.Scheme, StringComparer.OrdinalIgnoreCase))
-    {
-        throw new InvalidOperationException(
-            $"{variableName} must be an absolute {string.Join('/', allowedSchemes)} URL.");
-    }
-
-    return endpoint;
-}

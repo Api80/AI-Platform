@@ -17,6 +17,8 @@ public sealed class MvpConfiguration
     public ThemeConfiguration Theme { get; init; } = new();
 
     public RiskConfiguration Risk { get; init; } = new();
+
+    public M3AcceptanceConfiguration Acceptance { get; init; } = new();
 }
 
 public sealed class SourceConfiguration
@@ -142,4 +144,15 @@ public sealed class HardRejectConfiguration
     public int MaximumEntryPriceImpactBasisPoints { get; init; } = 1_000;
 
     public int MaximumMarketDataAgeSeconds { get; init; } = 5;
+}
+
+public sealed class M3AcceptanceConfiguration
+{
+    public int MinimumRunHours { get; init; } = 168;
+
+    public int MinimumAutomatedAssessmentAttempts { get; init; } = 1;
+
+    public int MinimumTerminalCoverageBasisPoints { get; init; } = 9_500;
+
+    public bool RequireFallbackExercise { get; init; } = true;
 }
