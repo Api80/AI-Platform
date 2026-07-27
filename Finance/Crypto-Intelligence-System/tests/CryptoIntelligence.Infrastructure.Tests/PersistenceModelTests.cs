@@ -47,10 +47,13 @@ public sealed class PersistenceModelTests
             "CryptoIntelligence.Infrastructure.Persistence.Entities.IngestionCheckpointEntity");
         var slotState = context.Model.FindEntityType(
             "CryptoIntelligence.Infrastructure.Persistence.Entities.IngestionSlotStateEntity");
+        var normalizedEvent = context.Model.FindEntityType(
+            "CryptoIntelligence.Infrastructure.Persistence.Entities.NormalizedDomainEventEntity");
 
         Assert.Equal("raw_blockchain_events", rawEvent?.GetTableName());
         Assert.Equal("ingestion_checkpoints", checkpoint?.GetTableName());
         Assert.Equal("ingestion_slot_states", slotState?.GetTableName());
+        Assert.Equal("normalized_domain_events", normalizedEvent?.GetTableName());
         Assert.Contains(
             rawEvent!.GetIndexes(),
             index => index.IsUnique &&
@@ -72,6 +75,11 @@ public sealed class PersistenceModelTests
         Assert.Contains("ingestion_checkpoints", script, StringComparison.Ordinal);
         Assert.Contains("ingestion_slot_states", script, StringComparison.Ordinal);
         Assert.Contains("ux_raw_events_event_id", script, StringComparison.Ordinal);
+        Assert.Contains("normalized_domain_events", script, StringComparison.Ordinal);
+        Assert.Contains(
+            "ux_normalized_events_parser_identity",
+            script,
+            StringComparison.Ordinal);
     }
 
     private static CryptoIntelligenceDbContext CreateContext()

@@ -1,7 +1,7 @@
 # M2 Reliable Ingestion and New Token Radar
 
 > 状态：Implementation in progress
-> 当前增量：M2A Reliable Ingestion Foundation
+> 当前增量：M2B Solana Sources and Raydium Adapter
 
 ## 本增量目标
 
@@ -64,13 +64,35 @@ Pending / RetryableFailure
 
 Worker 崩溃后，过期 Lease 可以由其他实例回收。成功处理和失败状态都写回数据库，原始 Payload 不删除。
 
+## M2B Solana Sources and Raydium Adapter
+
+M2B 增加：
+
+- Solana `logsSubscribe` WebSocket 发现；
+- 多 Program Subscription、Subscription ID 映射和 Signature 有界去重；
+- 断线记录、自动重连和指数退避；
+- `getTransaction` RPC 获取、暂时空值重试、HTTP 限流退避；
+- 主 RPC 失败后的独立备用 Source；
+- 固定 IDL 内嵌和正式 Raydium LaunchLab/CPMM Adapter；
+- Unknown Program Version 明确失败；
+- Raw Transaction 持久化后再进行 Adapter 解析；
+- `normalized_domain_events` 幂等追加和 Migration 003；
+- Worker 采集与持久派发循环。
+
+Worker 只从环境变量读取 RPC Endpoint，Endpoint 不进入配置快照或仓库：
+
+```text
+SOLANA_RPC_WS_URL
+SOLANA_RPC_HTTP_URL
+SOLANA_RPC_FALLBACK_HTTP_URL
+```
+
+未提供前两个变量时 Worker 保持安全禁用状态。系统不读取私钥，不签名，不发送交易。
+
 ## 下一增量
 
-M2B 将继续实现：
+M2C 将继续实现：
 
-- WebSocket 发现、自动重连和断线记录；
-- RPC 交易详情、限流退避、备用 Source 与补采；
-- 将 Raydium Spike Parser 迁移为正式 Adapter；
 - Token/Pool/Swap/Liquidity 投影；
 - TokenCandidate、滚动 FeatureSnapshot 和确定性 Replay；
 - Raw Event 时间分区与保留策略的 PostgreSQL 验证。

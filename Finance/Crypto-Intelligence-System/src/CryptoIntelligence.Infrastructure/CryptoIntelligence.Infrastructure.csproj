@@ -15,4 +15,11 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\samples\adapter-spike\raydium-launchlab-cpmm\idl\raydium_launchpad.json"
+                      LogicalName="CryptoIntelligence.Raydium.raydium_launchpad.json" />
+    <EmbeddedResource Include="..\..\samples\adapter-spike\raydium-launchlab-cpmm\idl\raydium_cp_swap.json"
+                      LogicalName="CryptoIntelligence.Raydium.raydium_cp_swap.json" />
+  </ItemGroup>
+
 </Project>

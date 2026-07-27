@@ -72,3 +72,17 @@ public sealed class IngestionSlotStateEntity
     public string? GapReason { get; set; }
     public DateTimeOffset UpdatedTime { get; set; }
 }
+
+public sealed class NormalizedDomainEventEntity
+{
+    public Guid Id { get; set; }
+    public Guid RawEventId { get; set; }
+    public required string DomainEventType { get; set; }
+    public int DomainEventIndex { get; set; }
+    public required string ProgramId { get; set; }
+    public required string Payload { get; set; }
+    public DateTimeOffset EventTime { get; set; }
+    public required string ParserVersion { get; set; }
+    public required string SchemaVersion { get; set; }
+    public DateTimeOffset CreatedTime { get; set; }
+}
