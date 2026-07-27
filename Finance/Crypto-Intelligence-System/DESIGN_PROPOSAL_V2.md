@@ -1,8 +1,8 @@
 # Crypto Intelligence System Design Proposal V2
 
-> 状态：Proposed / 待评审  
+> 状态：Phase 1 Design Baseline  
 > 适用范围：Phase 1，并为 Phase 2 Wallet Intelligence、Phase 3 AI Intelligence 预留稳定扩展点  
-> 本文是修订提案，不直接废止现有设计文档；评审通过后再同步更新 SYSTEM_DESIGN、SERVICE_ARCHITECTURE、DATABASE_DESIGN 和 TECH_DESIGN_PHASE1。
+> 关键设计已经通过 ADR 和专项规范固化；历史设计文档保留但不再作为实现依据。
 
 ## 1. 设计目标
 
@@ -578,26 +578,49 @@ Execution Engine
 11. API、基础 Dashboard 和运行监控；
 12. 历史回放、断线恢复和策略复现验收。
 
-## 15. 待评审决策
+## 15. 已确认决策
 
-1. Phase 1 是否正式采用模块化单体，而不是独立微服务；
-2. 是否确认 PostgreSQL 为唯一事实来源；
-3. Phase 1 持久化分发使用 PostgreSQL Outbox/状态队列，还是立即使用消息队列；
-4. Raw Event Payload 的保存格式和保留周期；
-5. Risk Score 是否统一为 0 低风险、100 高风险；
-6. Phase 1 最小 Wallet Analyzer 的边界；
-7. Paper Execution Model 的第一版成交与失败假设；
-8. Phase 1 策略有效性的量化验收阈值；
-9. 原始事件、特征和运行结果的数据保留及备份策略。
+1. Phase 1 采用模块化单体；
+2. PostgreSQL 是唯一事实来源，Redis 仅作可重建缓存；
+3. 事件投递采用 At-least-once + 幂等 Consumer；
+4. Phase 1 使用 PostgreSQL 持久化状态队列和 Worker Lease；
+5. WebSocket 用于低延迟发现，RPC 用于详情获取、最终性刷新、补采和对账；
+6. 正式 StrategyRun 只消费 Finalized 且 Reconciled 的数据；
+7. Phase 1 V1 只支持一个 Launch Source 和一个 AMM/Pool Adapter 的完整闭环；
+8. Risk Score 统一为 0 低风险、100 高风险；
+9. Paper Execution 使用确定性、保守、版本化的 V1 模型；
+10. 策略有效性按预注册的时间切分、OOS、Walk-Forward 和压力测试门槛判断；
+11. 数据采用分区、分类保留、每日备份和定期恢复演练；
+12. 运行可靠性按 Phase 1 SLO 监控。
 
-## 16. 评审通过后的文档动作
+详细决策：
 
-评审通过后：
+- [ADR-0001 Runtime and Persistence](./adr/ADR-0001-phase1-runtime-and-persistence.md)
+- [ADR-0002 Event Delivery and Idempotency](./adr/ADR-0002-event-delivery-idempotency-and-checkpoints.md)
+- [ADR-0003 Solana Finality and Reconciliation](./adr/ADR-0003-solana-finality-and-reconciliation.md)
+- [ADR-0004 Adapter Scope](./adr/ADR-0004-phase1-solana-adapter-scope.md)
+- [ADR-0005 Data Retention and Backup](./adr/ADR-0005-data-partition-retention-and-backup.md)
+- [Paper Execution Model V1](./PAPER_EXECUTION_MODEL_V1.md)
+- [Strategy Validation Protocol V1](./STRATEGY_VALIDATION_PROTOCOL_V1.md)
+- [Phase 1 Observability and SLO](./OBSERVABILITY_SLO_PHASE1.md)
 
-1. 将本文确认为 Phase 1 架构基线；
-2. 更新 `SYSTEM_DESIGN.md`；
-3. 更新 `SERVICE_ARCHITECTURE.md`；
-4. 重写 `DATABASE_DESIGN.md`；
-5. 更新 `TECH_DESIGN_PHASE1.md`；
-6. 将关键决策拆分为 ADR；
-7. 将验收门槛转化为 Phase 1 开发计划和测试计划。
+## 16. Implementation Decisions Remaining
+
+以下内容不改变总体架构，由对应 Milestone 通过 Spike、配置或容量报告确定：
+
+1. 首个 Launch Source 和 AMM Adapter 的具体 ProgramId；
+2. RPC Source 的部署配置和故障切换顺序；
+3. Adapter 的已知版本与解析样本；
+4. 基于 7 天真实采集数据调整分区和热数据窗口；
+5. Network/Priority Fee 的初始保守配置；
+6. 策略具体 Feature 阈值和 Risk Rule 参数。
+
+这些参数必须版本化和可审计，不得以未记录的运行时常量存在。
+
+## 17. Next Actions
+
+1. 按 `DEVELOPMENT_PLAN_PHASE1.md` 启动 Milestone 1；
+2. 创建数据库物理 Schema 和索引设计；
+3. 完成 Adapter Spike 并固化 Program 配置；
+4. 将 ADR 和专项规范转化为自动化测试；
+5. Milestone 2 稳定采集 7 天后完成容量与 SLO 复审。
