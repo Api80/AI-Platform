@@ -1,7 +1,7 @@
 # M2 Reliable Ingestion and New Token Radar
 
-> 状态：Implementation in progress
-> 当前增量：M2C New Token Radar Projections
+> 状态：M2D code complete; operational exit validation pending
+> 当前增量：M2D Backfill, Reconciliation and Operations
 
 ## 本增量目标
 
@@ -111,14 +111,42 @@ GET /api/v1/radar/candidates/{tokenAddress}
 
 当前 Adapter 从 Raydium 指令参数生成首版 Radar 投影。对于 Swap，输入数量和最低输出数量属于交易意图，不等同于链上最终成交结果。进入风险、策略和 Paper Trading 前，必须继续解析 Event Payload，并用交易后的账户余额与池储备变化完成对账；未经对账的数量和价格只用于验证采集、候选状态与滚动窗口链路。
 
+## M2D Backfill, Reconciliation and Operations
+
+M2D 增加：
+
+- 实时发现与 Program 级 Checkpoint 联动；
+- `getSlot(finalized)` 和 `getSignaturesForAddress` 分页补采；
+- 主 Source 失败后切换独立备用 Backfill Source；
+- finalized 交易详情持久化与 CanonicalStatus 提升；
+- Slot 覆盖、处理状态、最终性和 Gap 联合计算；
+- `ReconciledThroughSlot` 只按连续且无缺口的 Slot 推进；
+- Checkpoint/Slot 并发幂等写入；
+- 补采 Slot 数、Signature 数和运行周期配置；
+- 分区提前量、热数据保留期和容量复审周期配置；
+- Checkpoint、Gap 和 PostgreSQL 容量只读 API。
+
+```text
+GET /api/v1/ingestion/checkpoints
+GET /api/v1/ingestion/gaps
+GET /api/v1/ingestion/capacity
+```
+
+容量 API 输出高增长表的行数估算、数据/索引/总字节数、物理分区状态，以及最近 24 小时 Raw Event、Raw Bytes、Swap 和 MarketSnapshot 数量。每日保存该快照后才能计算真实增长率；备份大小和恢复耗时仍由部署环境的备份系统提供。
+
+## M2 Exit Gate 状态
+
+代码与自动化测试门槛已完成。以下运行门槛必须在配置真实主/备用 RPC 和 PostgreSQL 后完成，不能用离线测试代替：
+
+- 连续采集至少 7 天；
+- 正式验证区间未解决 Gap 为 0；
+- Worker 重启和 WebSocket 断线后能够从 Checkpoint 补采；
+- `ReconciledThroughSlot` 不跨越缺口；
+- 每日保存容量快照，并据此确认物理分区大小和保留期；
+- 执行备份恢复演练并记录恢复耗时。
+
+运行步骤和验收记录格式见 [M2D_OPERATIONAL_RUNBOOK.md](./M2D_OPERATIONAL_RUNBOOK.md)。
+
 ## 下一增量
 
-M2D 将完成 M2 Exit Gate：
-
-- Checkpoint 与实时 Worker 的完整联动；
-- Slot/Signature Backfill 和 Finality Refresh；
-- ReconciledThroughSlot 连续推进验证；
-- Raw Event 分区参数和保留策略的 PostgreSQL 容量验证；
-- 连续采集试运行和数据缺口报告。
-
-M2 未完成前，不进入风险判断、策略决策或模拟交易。
+M2 运行门槛通过后进入 M3 Theme and Minimal Risk。在此之前，不进入策略决策或模拟交易。

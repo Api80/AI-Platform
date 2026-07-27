@@ -10,7 +10,8 @@ public sealed class Worker(
     ConfigurationSnapshot configurationSnapshot,
     MvpConfiguration configuration,
     IServiceScopeFactory scopeFactory,
-    IEnumerable<ISolanaDiscoverySource> discoverySources)
+    IEnumerable<ISolanaDiscoverySource> discoverySources,
+    IEnumerable<ISolanaBackfillSource> backfillSources)
     : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -22,7 +23,8 @@ public sealed class Worker(
             configurationSnapshot.ConfigurationHash);
 
         var discovery = discoverySources.SingleOrDefault();
-        if (discovery is null)
+        var backfill = backfillSources.SingleOrDefault();
+        if (discovery is null || backfill is null)
         {
             logger.LogWarning(
                 "Solana ingestion is disabled. Set SOLANA_RPC_WS_URL and " +
@@ -33,7 +35,8 @@ public sealed class Worker(
 
         await Task.WhenAll(
             DiscoverAsync(discovery, stoppingToken),
-            DispatchAsync(stoppingToken));
+            DispatchAsync(stoppingToken),
+            ReconcileAsync(stoppingToken));
     }
 
     private async Task DiscoverAsync(
@@ -66,12 +69,69 @@ public sealed class Worker(
             await using var scope = scopeFactory.CreateAsyncScope();
             var store = scope.ServiceProvider.GetRequiredService<IRawEventStore>();
             var persisted = await store.PersistAsync(input, cancellationToken);
+            var reconciliationStore = scope.ServiceProvider
+                .GetRequiredService<IIngestionReconciliationStore>();
+            await reconciliationStore.RecordRealtimeObservationAsync(
+                new IngestionCheckpointKey(
+                    "Solana",
+                    "mainnet-beta",
+                    configuration.Source.RpcSourceName,
+                    notification.ProgramId),
+                notification.Slot,
+                notification.ObservedAt,
+                cancellationToken);
             logger.LogInformation(
                 "Solana discovery {Signature} persisted as {EventId}; inserted={Inserted}",
                 notification.Signature,
                 persisted.EventId,
                 persisted.Inserted);
         }
+    }
+
+    private async Task ReconcileAsync(CancellationToken cancellationToken)
+    {
+        var startSlot = configuration.Source.HistoricalRunStartSlot ??
+                        configuration.Source.FixtureCoverageStartSlot;
+        var initialThroughSlot = startSlot == 0 ? 0 : startSlot - 1;
+        using var timer = new PeriodicTimer(
+            TimeSpan.FromSeconds(
+                configuration.Source.ReconciliationIntervalSeconds));
+        do
+        {
+            foreach (var programId in configuration.Source.ProgramIds)
+            {
+                try
+                {
+                    await using var scope = scopeFactory.CreateAsyncScope();
+                    var reconciliation = scope.ServiceProvider
+                        .GetRequiredService<SolanaBackfillReconciliationService>();
+                    var result = await reconciliation.RunCycleAsync(
+                        programId,
+                        initialThroughSlot,
+                        DateTimeOffset.UtcNow,
+                        cancellationToken);
+                    logger.LogInformation(
+                        "Solana reconciliation {ProgramId} covered ({FromSlot}, {ToSlot}] " +
+                        "with {SignatureCount} signatures, {GapCount} gaps and reconciled " +
+                        "watermark {ReconciledSlot}",
+                        result.ProgramId,
+                        result.FromExclusive,
+                        result.ToInclusive,
+                        result.SignatureCount,
+                        result.GapCount,
+                        result.Watermarks.ReconciledThroughSlot);
+                }
+                catch (Exception exception) when (
+                    exception is not OperationCanceledException)
+                {
+                    logger.LogError(
+                        exception,
+                        "Solana reconciliation failed for {ProgramId}",
+                        programId);
+                }
+            }
+        }
+        while (await timer.WaitForNextTickAsync(cancellationToken));
     }
 
     private async Task DispatchAsync(CancellationToken cancellationToken)

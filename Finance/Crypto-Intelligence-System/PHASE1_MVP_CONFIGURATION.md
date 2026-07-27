@@ -19,6 +19,7 @@
 System
 Source
 Radar
+Storage
 Theme
 Risk
 EntryStrategy
@@ -55,6 +56,9 @@ source:
   requireReconciledData: true
   rpcSourceName: solana-public-development
   fallbackRpcSourceName: null
+  backfillMaximumSlotsPerCycle: 256
+  backfillMaximumSignaturesPerCycle: 1000
+  reconciliationIntervalSeconds: 30
 
 radar:
   minimumObservationSeconds: 30
@@ -71,6 +75,12 @@ radar:
     #   minimumQuoteReserveRaw: null
     #   decimals: null
     #   referenceCurrency: null
+
+storage:
+  partitionAheadMonths: 2
+  rebuildableHotRetentionDays: 180
+  operationalRetentionDays: 30
+  capacityReviewMinimumDays: 7
 
 theme:
   mode: KeywordRules

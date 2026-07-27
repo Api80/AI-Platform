@@ -48,6 +48,27 @@ public static class MvpConfigurationValidator
                 "Fixture coverage start slot must be greater than zero."));
         }
 
+        if (configuration.Source.BackfillMaximumSlotsPerCycle <= 0)
+        {
+            errors.Add(new ConfigurationError(
+                "source.backfillMaximumSlotsPerCycle",
+                "Backfill slot limit must be greater than zero."));
+        }
+
+        if (configuration.Source.BackfillMaximumSignaturesPerCycle <= 0)
+        {
+            errors.Add(new ConfigurationError(
+                "source.backfillMaximumSignaturesPerCycle",
+                "Backfill signature limit must be greater than zero."));
+        }
+
+        if (configuration.Source.ReconciliationIntervalSeconds <= 0)
+        {
+            errors.Add(new ConfigurationError(
+                "source.reconciliationIntervalSeconds",
+                "Reconciliation interval must be greater than zero."));
+        }
+
         if (!string.Equals(
                 configuration.Source.StrategyCommitment,
                 "finalized",
@@ -87,6 +108,22 @@ public static class MvpConfigurationValidator
             errors.Add(new ConfigurationError(
                 "radar.maximumMarketDataAgeSeconds",
                 "Market data age cannot be shorter than the snapshot interval."));
+        }
+
+        if (configuration.Storage.PartitionAheadMonths <= 0)
+        {
+            errors.Add(new ConfigurationError(
+                "storage.partitionAheadMonths",
+                "At least one future partition month is required."));
+        }
+
+        if (configuration.Storage.RebuildableHotRetentionDays <= 0 ||
+            configuration.Storage.OperationalRetentionDays <= 0 ||
+            configuration.Storage.CapacityReviewMinimumDays <= 0)
+        {
+            errors.Add(new ConfigurationError(
+                "storage",
+                "Retention and capacity review durations must be positive."));
         }
 
         if (configuration.FormalRun)

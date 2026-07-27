@@ -11,6 +11,8 @@ public sealed class MvpConfiguration
     public SourceConfiguration Source { get; init; } = new();
 
     public RadarConfiguration Radar { get; init; } = new();
+
+    public StorageConfiguration Storage { get; init; } = new();
 }
 
 public sealed class SourceConfiguration
@@ -40,6 +42,23 @@ public sealed class SourceConfiguration
     public string RpcSourceName { get; init; } = string.Empty;
 
     public string? FallbackRpcSourceName { get; init; }
+
+    public int BackfillMaximumSlotsPerCycle { get; init; } = 256;
+
+    public int BackfillMaximumSignaturesPerCycle { get; init; } = 1_000;
+
+    public int ReconciliationIntervalSeconds { get; init; } = 30;
+}
+
+public sealed class StorageConfiguration
+{
+    public int PartitionAheadMonths { get; init; } = 2;
+
+    public int RebuildableHotRetentionDays { get; init; } = 180;
+
+    public int OperationalRetentionDays { get; init; } = 30;
+
+    public int CapacityReviewMinimumDays { get; init; } = 7;
 }
 
 public sealed class RadarConfiguration
