@@ -2,7 +2,8 @@
 
 > 状态：Phase 1 逻辑数据模型基线  
 > 上位架构：[DESIGN_PROPOSAL_V2.md](./DESIGN_PROPOSAL_V2.md)  
-> 领域语义：[DOMAIN_MODEL.md](./DOMAIN_MODEL.md)
+> 领域语义：[DOMAIN_MODEL.md](./DOMAIN_MODEL.md)  
+> 关键决策：[adr/](./adr/)；执行与验证规范见 README 当前设计基线
 
 ## 1. Purpose
 
@@ -101,10 +102,15 @@ InstructionIndex
 InnerInstructionIndex
 ProgramId
 EventType
+EventOrdinal
 EventTime
 ObservedTime
 FinalizedTime
 CommitmentLevel
+CanonicalStatus
+FinalityUpdatedTime
+RevertedTime
+RevertReason
 Source
 RawPayload
 SchemaVersion
@@ -125,6 +131,7 @@ TransactionSignature
 InstructionIndex
 InnerInstructionIndex
 EventType
+EventOrdinal
 SchemaVersion
 ```
 
@@ -162,8 +169,11 @@ Chain
 Network
 Source
 SubscriptionType
-LastObservedSlot
-LastCompletedSlot
+ObservedThroughSlot
+PersistedThroughSlot
+ProcessedThroughSlot
+FinalizedThroughSlot
+ReconciledThroughSlot
 LastCompletedSignature
 Status
 LeaseOwner
@@ -209,8 +219,10 @@ RawEventId
 DomainEventType
 EntityType
 EntityNaturalKey
+DomainEventIndex
 Payload
 EventTime
+CanonicalStatus
 ParserVersion
 SchemaVersion
 CreatedTime
@@ -219,7 +231,7 @@ CreatedTime
 唯一约束：
 
 ```text
-RawEventId + DomainEventType + ParserVersion
+RawEventId + DomainEventType + DomainEventIndex + ParserVersion
 ```
 
 ## 4. Domain Fact Layer
@@ -626,8 +638,9 @@ CreatedTime
 RunType：
 
 ```text
-Replay
-PaperLive
+HistoricalReplay
+StreamingPaperProvisional
+ForwardPaper
 Backtest
 ```
 
