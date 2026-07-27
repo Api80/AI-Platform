@@ -36,7 +36,7 @@ public sealed class HealthEndpointTests : IClassFixture<CryptoApiFactory>
             "/api/v1/system/status");
 
         Assert.NotNull(response);
-        Assert.Equal("M2 New Token Radar", response.Milestone);
+        Assert.Equal("M2 Reliable Ingestion Exit Validation", response.Milestone);
         Assert.Equal("phase1-mvp-research-v1", response.ConfigurationVersion);
         Assert.Equal(64, response.ConfigurationHash.Length);
     }

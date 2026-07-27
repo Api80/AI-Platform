@@ -16,7 +16,7 @@ Crypto Intelligence System 是 AI Platform 在金融领域的一个链上智能�
 
 ## 当前进度
 
-当前状态：`Phase 1 M0/M1 已完成，M2 Reliable Ingestion 开发中`。
+当前状态：`Phase 1 M0/M1 已完成，M2 代码出口完成、真实运行验收待执行`。
 
 - [PROJECT_STATUS.md](./PROJECT_STATUS.md)  
   当前项目情况、已完成设计、实施状态、风险和下一步。
@@ -24,7 +24,7 @@ Crypto Intelligence System 是 AI Platform 在金融领域的一个链上智能�
 - [ADAPTER_SPIKE_REPORT.md](./ADAPTER_SPIKE_REPORT.md)  
   首个 Launch/Pool Adapter 候选矩阵、主网证据、ProgramId、版本固定、Quote 验证、限制和 M0 Exit Gate。
 
-已完成 Raydium LaunchLab + CPMM 选型、10 个主网离线 Fixtures、IDL 解析、整数 Quote，以及正式 .NET Solution、配置、数据库、可观测性和 CI 骨架。当前开始实现 M2 可靠采集。
+已完成 Raydium LaunchLab + CPMM 选型、可靠采集、正式 Adapter、Radar 投影、确定性 Replay、RPC 补采和连续 Checkpoint。当前准备执行 M2 七天真实运行验收。
 
 - [M1_FOUNDATION.md](./M1_FOUNDATION.md)
   正式工程结构、配置、数据库迁移、健康检查、测试、CI 和本地运行说明。

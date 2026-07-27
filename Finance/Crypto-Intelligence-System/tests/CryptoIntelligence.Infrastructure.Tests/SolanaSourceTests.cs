@@ -99,6 +99,42 @@ public sealed class SolanaSourceTests
         Assert.Same(expected, result);
     }
 
+    [Fact]
+    public async Task Backfill_source_filters_slot_range_and_orders_oldest_first()
+    {
+        var handler = new SequenceHandler(
+            Json(HttpStatusCode.OK, """{"jsonrpc":"2.0","result":105,"id":1}"""),
+            Json(
+                HttpStatusCode.OK,
+                """
+                {
+                  "jsonrpc":"2.0",
+                  "result":[
+                    {"signature":"newer","slot":104,"err":null,"blockTime":1004},
+                    {"signature":"inside-b","slot":103,"err":null,"blockTime":1003},
+                    {"signature":"inside-a","slot":102,"err":null,"blockTime":1002},
+                    {"signature":"boundary","slot":100,"err":null,"blockTime":1000}
+                  ],
+                  "id":1
+                }
+                """));
+        var source = new SolanaRpcBackfillSource(
+            new HttpClient(handler) { BaseAddress = new Uri("https://rpc.example/") },
+            "primary");
+
+        var head = await source.GetFinalizedSlotAsync(CancellationToken.None);
+        var result = await source.ListFinalizedSignaturesAsync(
+            "program",
+            fromExclusive: 100,
+            toInclusive: 103,
+            maximumSignatures: 10,
+            CancellationToken.None);
+
+        Assert.Equal(105UL, head);
+        Assert.True(result.Complete);
+        Assert.Equal(["inside-a", "inside-b"], result.Signatures.Select(value => value.Signature));
+    }
+
     private static HttpResponseMessage Json(
         HttpStatusCode statusCode,
         string json) => new(statusCode)

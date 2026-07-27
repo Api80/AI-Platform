@@ -67,6 +67,41 @@ public sealed class ConfigurationTests
         Assert.Contains(errors, error => error.Path == "source.requireReconciledData");
     }
 
+    [Fact]
+    public void Invalid_backfill_and_storage_limits_are_rejected()
+    {
+        var original = ValidConfiguration();
+        var configuration = new MvpConfiguration
+        {
+            ConfigurationVersion = original.ConfigurationVersion,
+            Source = new SourceConfiguration
+            {
+                LaunchAdapter = original.Source.LaunchAdapter,
+                PoolAdapter = original.Source.PoolAdapter,
+                AdapterVersion = original.Source.AdapterVersion,
+                LaunchLabParserVersion = original.Source.LaunchLabParserVersion,
+                CpmmParserVersion = original.Source.CpmmParserVersion,
+                ProgramIds = original.Source.ProgramIds,
+                FixtureCoverageStartSlot = original.Source.FixtureCoverageStartSlot,
+                RpcSourceName = original.Source.RpcSourceName,
+                BackfillMaximumSlotsPerCycle = 0
+            },
+            Storage = new StorageConfiguration
+            {
+                PartitionAheadMonths = 0
+            }
+        };
+
+        var errors = MvpConfigurationValidator.Validate(configuration);
+
+        Assert.Contains(
+            errors,
+            error => error.Path == "source.backfillMaximumSlotsPerCycle");
+        Assert.Contains(
+            errors,
+            error => error.Path == "storage.partitionAheadMonths");
+    }
+
     private static MvpConfiguration ValidConfiguration() => new()
     {
         ConfigurationVersion = "phase1-mvp-research-v1",

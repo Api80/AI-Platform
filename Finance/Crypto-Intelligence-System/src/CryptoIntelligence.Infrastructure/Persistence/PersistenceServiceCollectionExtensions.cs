@@ -15,6 +15,12 @@ public static class PersistenceServiceCollectionExtensions
         services.AddDbContext<CryptoIntelligenceDbContext>(
             options => options.UseNpgsql(connectionString));
         services.AddScoped<IRawEventStore, PostgresRawEventStore>();
+        services.AddScoped<
+            IIngestionReconciliationStore,
+            PostgresIngestionReconciliationStore>();
+        services.AddScoped<
+            IIngestionOperationsQuery,
+            PostgresIngestionOperationsQuery>();
         services.AddScoped<INormalizedEventStore, PostgresNormalizedEventStore>();
         services.AddScoped<IRadarProjectionStore, PostgresRadarProjectionStore>();
         services.AddScoped<IRadarQueryService, PostgresRadarQueryService>();

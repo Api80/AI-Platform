@@ -25,3 +25,18 @@ GET {{HostAddress}}/api/v1/radar/candidates/{{tokenAddress}}
 Accept: application/json
 
 ###
+
+GET {{HostAddress}}/api/v1/ingestion/checkpoints
+Accept: application/json
+
+###
+
+GET {{HostAddress}}/api/v1/ingestion/gaps?limit=100
+Accept: application/json
+
+###
+
+GET {{HostAddress}}/api/v1/ingestion/capacity
+Accept: application/json
+
+###

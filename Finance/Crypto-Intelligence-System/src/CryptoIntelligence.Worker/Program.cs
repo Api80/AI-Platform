@@ -31,6 +31,14 @@ builder.Services.AddCryptoIntelligencePersistence(connectionString);
 builder.Services.AddScoped<IRawEventHandler, SolanaAdapterRawEventHandler>();
 builder.Services.AddScoped<IProjectionEventHandler, RadarProjectionHandler>();
 builder.Services.AddScoped<DurableRawEventDispatcher>();
+builder.Services.AddScoped(provider => new SolanaBackfillReconciliationService(
+    provider.GetRequiredService<ISolanaBackfillSource>(),
+    provider.GetRequiredService<ISolanaTransactionSource>(),
+    provider.GetRequiredService<IRawEventStore>(),
+    provider.GetRequiredService<IIngestionReconciliationStore>(),
+    mvpConfiguration.Source.RpcSourceName,
+    mvpConfiguration.Source.BackfillMaximumSlotsPerCycle,
+    mvpConfiguration.Source.BackfillMaximumSignaturesPerCycle));
 ConfigureSolanaSources(builder.Services, mvpConfiguration);
 builder.Services.AddHostedService<Worker>();
 
@@ -83,6 +91,27 @@ static void ConfigureSolanaSources(
 
         return new FallbackSolanaTransactionSource(sources);
     });
+    services.AddSingleton<ISolanaBackfillSource>(_ =>
+    {
+        var sources = new List<ISolanaBackfillSource>
+        {
+            CreateBackfillSource(primaryEndpoint, configuration.Source.RpcSourceName)
+        };
+        var fallbackUrl = Environment.GetEnvironmentVariable(
+            "SOLANA_RPC_FALLBACK_HTTP_URL");
+        if (!string.IsNullOrWhiteSpace(fallbackUrl))
+        {
+            sources.Add(CreateBackfillSource(
+                RequireEndpoint(
+                    fallbackUrl,
+                    "SOLANA_RPC_FALLBACK_HTTP_URL",
+                    Uri.UriSchemeHttp,
+                    Uri.UriSchemeHttps),
+                configuration.Source.FallbackRpcSourceName ?? "fallback"));
+        }
+
+        return new FallbackSolanaBackfillSource(sources);
+    });
     services.AddScoped<IRawEventHandler, SolanaDiscoveryRawEventHandler>();
 }
 
@@ -92,6 +121,17 @@ static SolanaRpcTransactionSource CreateRpcSource(Uri endpoint, string sourceNam
         {
             BaseAddress = endpoint,
             Timeout = TimeSpan.FromSeconds(20)
+        },
+        sourceName);
+
+static SolanaRpcBackfillSource CreateBackfillSource(
+    Uri endpoint,
+    string sourceName) =>
+    new(
+        new HttpClient
+        {
+            BaseAddress = endpoint,
+            Timeout = TimeSpan.FromSeconds(30)
         },
         sourceName);
 

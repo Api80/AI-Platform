@@ -2,7 +2,7 @@
 
 > 更新时间：2026-07-28  
 > 状态：M0/M1 已完成，M2 Reliable Ingestion 开发中
-> 代码实施进度：M2A/M2B 已完成；M2C 已完成开发和本地验证，等待 PR 评审
+> 代码实施进度：M2A/M2B/M2C 已合并；M2D 代码已完成本地验证，运行验收待执行
 
 ## 1. Project Positioning
 
@@ -116,14 +116,14 @@ Phase 1 实际开发以 MVP Implementation Baseline 为准；长期设计用于�
 | Long-term architecture | Completed | 作为未来扩展蓝图 |
 | Domain model | Completed | 已明确领域边界和不变量 |
 | Logical data model | Completed | Configuration 与可靠采集物理 Schema 已开始实现 |
-| Reliability ADRs | In progress | EventId、水位、Gap、Lease、重试和 Dead Letter 已转化为代码和测试 |
+| Reliability ADRs | In progress | 补采、Finality、连续水位和 Gap 已转化为代码；等待真实连续运行验收 |
 | Paper execution specification | Completed | 尚未实现 Adapter Quote |
 | Strategy validation protocol | Completed | 尚无真实样本 |
 | Phase 1 MVP detailed design | Completed | MVP Design、Configuration 和 Implementation Plan 已完成 |
 | Adapter selection spike | Completed | Raydium LaunchLab + CPMM，10 个离线 Fixtures 和实时发现/补采验证通过 |
-| Solution/code | In progress | M2C Radar 投影、候选状态机、滚动指标和 Replay 已完成本地验证 |
+| Solution/code | In progress | M2D Backfill、Finality Refresh、Checkpoint 联动和运维查询已完成本地验证 |
 | Database migrations | In progress | Migration 001-004 已生成并验证；Migration 004 增加 Radar 读模型 |
-| Historical replay | Not started | 依赖 Adapter 和 Raw Event Store |
+| Historical replay | In progress | 确定性 Replay 基础已完成；正式数据集依赖 M2 运行验收 |
 | Forward paper | Not started | 依赖前序 Milestone |
 | Dashboard | Not started | 只计划最小查询和监控能力 |
 
@@ -209,12 +209,12 @@ Phase 1 的买卖判断以可复现、可回放的规则策略为基线。
 
 ## 10. Next Actions
 
-1. 完成 M2A Raw Event、Checkpoint、Gap、Lease 与 Dead Letter 基础；
-2. 接入 WebSocket 自动重连和 RPC 详情/补采；
-3. 将 Raydium Spike Parser 迁移为正式 Adapter；
-4. 建立 Token、Pool、Swap、Liquidity 和 Candidate 投影；
-5. 建立滚动 FeatureSnapshot 与确定性 Replay；
-6. 稳定采集 7 天后完成容量、分区和 SLO 复审。
+1. M2A Raw Event、Checkpoint、Gap、Lease 与 Dead Letter 基础已完成；
+2. WebSocket 自动重连、RPC 详情和 Slot/Signature 补采已完成；
+3. Raydium 正式 Adapter 已完成；
+4. Token、Pool、Swap、Liquidity 和 Candidate 投影已完成；
+5. 滚动 FeatureSnapshot 与确定性 Replay 已完成；
+6. 下一步是在真实环境稳定采集 7 天，完成容量、分区、备份恢复和 SLO 复审。
 
 ## 11. Current Assessment
 
@@ -225,4 +225,4 @@ Phase 1 的买卖判断以可复现、可回放的规则策略为基线。
 - 规则策略扣除全部执行成本后仍有优势；
 - 系统能够诚实记录无法成交和无法退出。
 
-当前长期架构、Phase 1 MVP 设计、M0 Adapter Selection Spike 和 M1 Foundation 均已完成。当前进入 M2，先保证链上事件可靠落库、补采、去重和回放，再构建 Radar 候选与滚动指标。
+当前长期架构、Phase 1 MVP 设计、M0 Adapter Selection Spike 和 M1 Foundation 均已完成。M2 代码能力已进入出口验收阶段；通过真实连续采集、断线补采、缺口和容量复审后再进入 M3。
