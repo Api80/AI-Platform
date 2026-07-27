@@ -108,9 +108,10 @@ risk:
     rejectFreezeAuthorityRisk: true
 
     minimumQuoteReserveRaw: null
-    maximumCreatorHoldingPercentage: null
-    maximumTop10HoldingPercentage: null
-    maximumEntryPriceImpactBps: 1000
+    maximumLiquidityDropBasisPoints: null
+    maximumCreatorHoldingBasisPoints: null
+    maximumTop10HoldingBasisPoints: null
+    maximumEntryPriceImpactBasisPoints: 1000
     maximumMarketDataAgeSeconds: 5
 
 entryStrategy:

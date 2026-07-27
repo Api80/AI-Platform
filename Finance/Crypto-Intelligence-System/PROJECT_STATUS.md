@@ -1,8 +1,8 @@
 # Crypto Intelligence System Project Status
 
 > 更新时间：2026-07-28  
-> 状态：M0/M1 已完成，M2 Reliable Ingestion 开发中
-> 代码实施进度：M2A/M2B/M2C 已合并；M2D 代码已完成本地验证，运行验收待执行
+> 状态：M0/M1 已完成，M2 运行验收待执行，M3 Theme and Minimal Risk 开发中
+> 代码实施进度：M2A-M2D 已合并；M3A 纯规则引擎已完成本地验证
 
 ## 1. Project Positioning
 
@@ -121,7 +121,7 @@ Phase 1 实际开发以 MVP Implementation Baseline 为准；长期设计用于�
 | Strategy validation protocol | Completed | 尚无真实样本 |
 | Phase 1 MVP detailed design | Completed | MVP Design、Configuration 和 Implementation Plan 已完成 |
 | Adapter selection spike | Completed | Raydium LaunchLab + CPMM，10 个离线 Fixtures 和实时发现/补采验证通过 |
-| Solution/code | In progress | M2D Backfill、Finality Refresh、Checkpoint 联动和运维查询已完成本地验证 |
+| Solution/code | In progress | M3A Theme、Minimal Risk 和 Candidate Eligibility 纯规则链路已完成 |
 | Database migrations | In progress | Migration 001-004 已生成并验证；Migration 004 增加 Radar 读模型 |
 | Historical replay | In progress | 确定性 Replay 基础已完成；正式数据集依赖 M2 运行验收 |
 | Forward paper | Not started | 依赖前序 Milestone |
@@ -214,7 +214,8 @@ Phase 1 的买卖判断以可复现、可回放的规则策略为基线。
 3. Raydium 正式 Adapter 已完成；
 4. Token、Pool、Swap、Liquidity 和 Candidate 投影已完成；
 5. 滚动 FeatureSnapshot 与确定性 Replay 已完成；
-6. 下一步是在真实环境稳定采集 7 天，完成容量、分区、备份恢复和 SLO 复审。
+6. M2 真实环境七天验收仍待执行，不阻塞 M3 纯规则开发；
+7. M3A Theme/Minimal Risk 规则已完成，下一步接入 Sell Quote、Authority、Holder 证据和追加式持久化。
 
 ## 11. Current Assessment
 
@@ -225,4 +226,4 @@ Phase 1 的买卖判断以可复现、可回放的规则策略为基线。
 - 规则策略扣除全部执行成本后仍有优势；
 - 系统能够诚实记录无法成交和无法退出。
 
-当前长期架构、Phase 1 MVP 设计、M0 Adapter Selection Spike 和 M1 Foundation 均已完成。M2 代码能力已进入出口验收阶段；通过真实连续采集、断线补采、缺口和容量复审后再进入 M3。
+当前长期架构、Phase 1 MVP 设计、M0 Adapter Selection Spike 和 M1 Foundation 均已完成。M2 代码能力已进入出口验收阶段；M3 先推进不依赖数据库的纯规则能力，但在 M2 真实验收和 M3 正式证据接入完成前不进入策略或 Paper Trading。

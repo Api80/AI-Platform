@@ -36,7 +36,7 @@ public sealed class HealthEndpointTests : IClassFixture<CryptoApiFactory>
             "/api/v1/system/status");
 
         Assert.NotNull(response);
-        Assert.Equal("M2 Reliable Ingestion Exit Validation", response.Milestone);
+        Assert.Equal("M3 Theme and Minimal Risk", response.Milestone);
         Assert.Equal("phase1-mvp-research-v1", response.ConfigurationVersion);
         Assert.Equal(64, response.ConfigurationHash.Length);
     }
@@ -56,6 +56,49 @@ public sealed class HealthEndpointTests : IClassFixture<CryptoApiFactory>
             "/api/v1/radar/candidates?status=not-a-state");
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Intelligence_evaluation_does_not_depend_on_postgresql()
+    {
+        var now = DateTimeOffset.Parse("2026-07-28T00:01:00Z");
+        var request = new IntelligenceEvaluationRequest(
+            "Example AI",
+            "EAI",
+            now.AddSeconds(-60),
+            now,
+            HasUsableLiquidity: true,
+            MarketAsOfTime: now.AddSeconds(-1),
+            QuoteReserveRaw: 10_000,
+            EntryPriceImpactBasisPoints: 100,
+            LiquidityDropBasisPoints: 0,
+            MintAuthorityEnabled: false,
+            FreezeAuthorityEnabled: false,
+            AdapterAuthorityRisk: false,
+            CreatorHoldingBasisPoints: 100,
+            Top10HoldingBasisPoints: 1_000,
+            PoolVersionSupported: true,
+            IsFinalized: true,
+            IsReconciled: true,
+            SellQuote: new SellQuoteEvidenceRequest(
+                "Available",
+                InputBaseAmount: 100,
+                OutputQuoteAmount: 10,
+                PriceImpactBasisPoints: 100,
+                AsOfTime: now.AddSeconds(-1),
+                AdapterVersion: "adapter-v1",
+                FailureReason: null));
+
+        using var response = await _client.PostAsJsonAsync(
+            "/api/v1/intelligence/evaluate",
+            request);
+        var result = await response.Content
+            .ReadFromJsonAsync<IntelligenceEvaluationResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(result);
+        Assert.False(result.Risk.HardReject);
+        Assert.Equal("Eligible", result.Candidate.Status);
     }
 }
 
