@@ -2,7 +2,7 @@
   "schemaVersion": "adapter-fixture-manifest-v1",
   "network": "solana-mainnet-beta",
   "capturedAtUtc": "2026-07-28T00:00:00Z",
-  "status": "in-progress",
+  "status": "captured-and-verified",
   "versionPins": {
     "raydiumIdlCommit": "e7e0c96fe77bcf6a020b84a44c47a722aac8e359",
     "launchLabIdlBlob": "70186e3f02c2bead7e5a9a92453104df853683ed",
@@ -24,7 +24,7 @@
       "expectedInstructions": ["Initialize", "BuyExactIn"],
       "expectedDomainEvents": ["MintCreated", "PoolCreated", "SwapObserved", "TokenTransferred"],
       "transactionOutcome": "success",
-      "rawPayloadStatus": "pending-commit"
+      "rawPayloadStatus": "captured"
     },
     {
       "id": "launchlab-buy-exact-in",
@@ -36,7 +36,7 @@
       "expectedInstructions": ["BuyExactIn"],
       "expectedDomainEvents": ["SwapObserved", "TokenTransferred"],
       "transactionOutcome": "success",
-      "rawPayloadStatus": "pending-commit"
+      "rawPayloadStatus": "captured"
     },
     {
       "id": "launchlab-sell-exact-in",
@@ -46,7 +46,7 @@
       "expectedInstructions": ["SellExactIn"],
       "expectedDomainEvents": ["SwapObserved", "TokenTransferred"],
       "transactionOutcome": "success",
-      "rawPayloadStatus": "pending-commit"
+      "rawPayloadStatus": "captured"
     },
     {
       "id": "launchlab-multi-program-multi-event",
@@ -55,11 +55,12 @@
       "programId": "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj",
       "pool": "2D6WpsrRq66mUMxLccS3xbpi2rTN3nVZw3bJHguQD8Sr",
       "baseMint": "8AxzfT6fn8EJiRNN4LT68FwygFnFxdr4uT3aMzsxbonk",
-      "expectedInstructions": ["SwapWithDestination", "BuyExactIn"],
+      "observedRouterInstructions": ["SwapWithDestination"],
+      "expectedInstructions": ["BuyExactIn"],
       "expectedProgramDataCount": 2,
       "expectedDomainEvents": ["SwapObserved", "TokenTransferred"],
       "transactionOutcome": "success",
-      "rawPayloadStatus": "pending-commit"
+      "rawPayloadStatus": "captured"
     },
     {
       "id": "launchlab-failed-transaction",
@@ -70,7 +71,7 @@
       "expectedDomainEvents": [],
       "transactionOutcome": "failed",
       "expectedError": {"InstructionError": [2, {"Custom": 6000}]},
-      "rawPayloadStatus": "pending-commit"
+      "rawPayloadStatus": "captured"
     },
     {
       "id": "cpmm-swap-base-input",
@@ -80,26 +81,57 @@
       "expectedInstructions": ["SwapBaseInput"],
       "expectedDomainEvents": ["SwapObserved", "TokenTransferred"],
       "transactionOutcome": "success",
-      "rawPayloadStatus": "pending-commit"
+      "rawPayloadStatus": "captured"
+    },
+    {
+      "id": "launchlab-migrate-to-cpmm",
+      "signature": "TN4Vffv1i7K8NNUHDDvz8RTqp4CdKYE2Zvuuktc788VtirTKpjoDNj9VJ6AYbkrssbToVaxQrtSH2ffFLM9KMfL",
+      "slot": 339103624,
+      "programId": "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj",
+      "pool": "Q2sPHPdUWFMg7M7wwrQKLrn619cAucfRsmhVJffodSp",
+      "baseMint": "Dz9mQ9NzkBcCsuGPFJ3r1bS4wgqKMHBPiVuniW8Mbonk",
+      "quoteMint": "So11111111111111111111111111111111111111112",
+      "expectedInstructions": ["MigrateToCpswap", "Initialize"],
+      "expectedDomainEvents": ["PoolCreated", "LiquidityChanged", "TokenTransferred"],
+      "transactionOutcome": "success",
+      "rawPayloadStatus": "captured"
+    },
+    {
+      "id": "cpmm-liquidity-added",
+      "signature": "2CQRnNEjBin1unDT9q9sahbYAArz7zMHDR58T7oNgBVP3YofEB8zWJYpxb2mX3o9ERycTLWYs2YtG7WkULRhYbH9",
+      "slot": 345988405,
+      "programId": "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C",
+      "pool": "Q2sPHPdUWFMg7M7wwrQKLrn619cAucfRsmhVJffodSp",
+      "expectedInstructions": ["Deposit"],
+      "expectedDomainEvents": ["LiquidityChanged", "TokenTransferred"],
+      "transactionOutcome": "success",
+      "rawPayloadStatus": "captured"
+    },
+    {
+      "id": "cpmm-liquidity-removed",
+      "signature": "szbdoVnnFaQjZye6wzCSFnp2vci9MCLJsuiRSj7S8mStm3LARcGhthBBrZN6SQbAjpMNuF3FDRVJAE9NVHFYDAV",
+      "slot": 345961724,
+      "programId": "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C",
+      "pool": "Q2sPHPdUWFMg7M7wwrQKLrn619cAucfRsmhVJffodSp",
+      "expectedInstructions": ["Withdraw"],
+      "expectedDomainEvents": ["LiquidityChanged", "TokenTransferred"],
+      "transactionOutcome": "success",
+      "rawPayloadStatus": "captured"
     },
     {
       "id": "launchlab-migrated-cpmm-pool",
-      "signature": null,
-      "slot": null,
+      "signature": "TN4Vffv1i7K8NNUHDDvz8RTqp4CdKYE2Zvuuktc788VtirTKpjoDNj9VJ6AYbkrssbToVaxQrtSH2ffFLM9KMfL",
+      "slot": 339103624,
       "programId": "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C",
       "pool": "Q2sPHPdUWFMg7M7wwrQKLrn619cAucfRsmhVJffodSp",
       "baseMint": "Dz9mQ9NzkBcCsuGPFJ3r1bS4wgqKMHBPiVuniW8Mbonk",
       "quoteMint": "So11111111111111111111111111111111111111112",
       "externalEvidence": {"source": "Raydium API", "launchMigratePool": true},
+      "expectedInstructions": ["MigrateToCpswap", "Initialize"],
       "expectedDomainEvents": ["PoolCreated", "LiquidityChanged"],
-      "rawPayloadStatus": "migration-signature-pending"
+      "transactionOutcome": "success",
+      "rawPayloadStatus": "captured"
     }
   ],
-  "missingRequiredFixtures": [
-    "cpmm-initialize-or-launchlab-migrate-to-cpswap",
-    "liquidity-added",
-    "liquidity-removed",
-    "unsupported-program-version",
-    "committed-raw-json-payloads"
-  ]
+  "missingRequiredFixtures": []
 }

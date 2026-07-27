@@ -5,6 +5,7 @@ namespace RaydiumAdapterSpike;
 internal sealed record CpmmExactInputQuote(
     BigInteger AmountInRaw,
     BigInteger TradingFeeRaw,
+    BigInteger CreatorFeeRaw,
     BigInteger AmountInAfterFeeRaw,
     BigInteger AmountOutRaw,
     int TotalImpactBps);
@@ -15,7 +16,8 @@ internal static class CpmmQuoteCalculator
         BigInteger reserveInRaw,
         BigInteger reserveOutRaw,
         BigInteger amountInRaw,
-        int tradingFeeBps)
+        int tradingFeeBps,
+        int creatorFeeBps = 0)
     {
         if (reserveInRaw <= 0)
         {
@@ -45,9 +47,18 @@ internal static class CpmmQuoteCalculator
                 "Trading fee must be between 0 and 9999 basis points.");
         }
 
+        if (creatorFeeBps is < 0 or >= 10_000 ||
+            tradingFeeBps + creatorFeeBps >= 10_000)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(creatorFeeBps),
+                "Creator fee must be non-negative and total input fees must be below 10000 basis points.");
+        }
+
         const int basisPoints = 10_000;
         var tradingFeeRaw = DivideRoundUp(amountInRaw * tradingFeeBps, basisPoints);
-        var amountInAfterFeeRaw = amountInRaw - tradingFeeRaw;
+        var creatorFeeRaw = DivideRoundUp(amountInRaw * creatorFeeBps, basisPoints);
+        var amountInAfterFeeRaw = amountInRaw - tradingFeeRaw - creatorFeeRaw;
 
         if (amountInAfterFeeRaw <= 0)
         {
@@ -73,6 +84,7 @@ internal static class CpmmQuoteCalculator
         return new CpmmExactInputQuote(
             amountInRaw,
             tradingFeeRaw,
+            creatorFeeRaw,
             amountInAfterFeeRaw,
             amountOutRaw,
             totalImpactBps);
