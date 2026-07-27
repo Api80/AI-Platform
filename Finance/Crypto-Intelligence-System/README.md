@@ -16,12 +16,15 @@ Crypto Intelligence System 是 AI Platform 在金融领域的一个链上智能�
 
 ## 当前进度
 
-当前状态：`Phase 1 MVP 方案完成，Ready for Adapter Spike`。
+当前状态：`Phase 1 M0 Adapter Spike 进行中，Raydium LaunchLab + CPMM Conditional Go`。
 
 - [PROJECT_STATUS.md](./PROJECT_STATUS.md)  
   当前项目情况、已完成设计、实施状态、风险和下一步。
 
-当前尚未开始正式代码开发。下一步从首个 Launch Source 和 AMM/Pool 的 Adapter Selection Spike 开始。
+- [ADAPTER_SPIKE_REPORT.md](./ADAPTER_SPIKE_REPORT.md)  
+  首个 Launch/Pool Adapter 候选矩阵、主网证据、ProgramId、版本固定、Quote 验证、限制和 M0 Exit Gate。
+
+已完成 Adapter 初选和真实主网样本验证。下一步实现可运行的 Parser/Quote/Discovery 小型原型并补齐固定原始 Fixtures；M0 Exit Gate 通过后再进入正式工程骨架。
 
 ## Phase 1 MVP 实施基线
 
@@ -128,4 +131,3 @@ Phase 5
 5. 可追溯：所有决策能追溯到特征、规则和原始事件。
 6. 可复现：相同数据和配置产生相同结果。
 7. 可扩展：MVP 模块对应长期 Domain 边界，后续可以增加 Wallet 和 AI。
-
