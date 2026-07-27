@@ -1,7 +1,11 @@
 using System.Net;
 using System.Text;
+using System.Numerics;
 using CryptoIntelligence.Application.Ingestion;
+using CryptoIntelligence.Application.Intelligence;
+using CryptoIntelligence.Domain.Intelligence;
 using CryptoIntelligence.Infrastructure.Solana;
+using CryptoIntelligence.Infrastructure.Solana.Raydium;
 
 namespace CryptoIntelligence.Infrastructure.Tests;
 
@@ -134,6 +138,131 @@ public sealed class SolanaSourceTests
         Assert.True(result.Complete);
         Assert.Equal(["inside-a", "inside-b"], result.Signatures.Select(value => value.Signature));
     }
+
+    [Fact]
+    public void Cpmm_sell_quote_rejects_stale_and_unknown_token_programs()
+    {
+        var now = DateTimeOffset.Parse("2026-07-28T00:01:00Z");
+        var source = new RaydiumCpmmSellQuoteEvidenceSource(
+            "adapter-v1",
+            maximumSnapshotAgeSeconds: 5);
+        var snapshot = PoolSnapshot(now.AddSeconds(-1));
+
+        var available = source.QuoteExactInput(
+            snapshot,
+            BigInteger.Parse("1000000000"),
+            now);
+        var stale = source.QuoteExactInput(
+            snapshot with { AsOfTime = now.AddSeconds(-6) },
+            BigInteger.Parse("1000000000"),
+            now);
+        var unsupported = source.QuoteExactInput(
+            snapshot with { InputTokenProgramId = "Token2022" },
+            BigInteger.Parse("1000000000"),
+            now);
+
+        Assert.Equal(SellQuoteStatus.Available, available.Status);
+        Assert.Equal(766321904m, available.OutputQuoteAmount);
+        Assert.Equal(SellQuoteStatus.Stale, stale.Status);
+        Assert.Equal(SellQuoteStatus.StructurallyUnsupported, unsupported.Status);
+    }
+
+    [Fact]
+    public async Task Token_evidence_source_reads_authorities_and_holder_concentration()
+    {
+        var handler = new SequenceHandler(
+            Json(
+                HttpStatusCode.OK,
+                """
+                {
+                  "jsonrpc":"2.0",
+                  "result":{
+                    "context":{"slot":200},
+                    "value":{
+                      "owner":"__TOKEN_PROGRAM__",
+                      "data":{"parsed":{"type":"mint","info":{
+                        "mintAuthority":null,
+                        "freezeAuthority":"freeze"
+                      }}}
+                    }
+                  },
+                  "id":1
+                }
+                """.Replace(
+                    "__TOKEN_PROGRAM__",
+                    RaydiumCpmmSellQuoteEvidenceSource.ClassicTokenProgramId,
+                    StringComparison.Ordinal)),
+            Json(
+                HttpStatusCode.OK,
+                """
+                {"jsonrpc":"2.0","result":{
+                  "context":{"slot":201},
+                  "value":{"amount":"10000","decimals":6}
+                },"id":1}
+                """),
+            Json(
+                HttpStatusCode.OK,
+                """
+                {"jsonrpc":"2.0","result":{
+                  "context":{"slot":202},
+                  "value":[
+                    {"address":"a","amount":"3000"},
+                    {"address":"b","amount":"2000"},
+                    {"address":"c","amount":"1000"}
+                  ]
+                },"id":1}
+                """),
+            Json(
+                HttpStatusCode.OK,
+                """
+                {"jsonrpc":"2.0","result":{
+                  "context":{"slot":203},
+                  "value":[
+                    {"account":{"data":{"parsed":{"info":{
+                      "tokenAmount":{"amount":"500"}
+                    }}}}},
+                    {"account":{"data":{"parsed":{"info":{
+                      "tokenAmount":{"amount":"500"}
+                    }}}}}
+                  ]
+                },"id":1}
+                """));
+        var source = new SolanaTokenRiskEvidenceSource(
+            new HttpClient(handler) { BaseAddress = new Uri("https://rpc.example/") },
+            "primary");
+
+        var authority = await source.GetAuthorityAsync(
+            "mint",
+            CancellationToken.None);
+        var holders = await source.GetHolderConcentrationAsync(
+            "mint",
+            "creator",
+            CancellationToken.None);
+
+        Assert.Equal(EvidenceAvailability.Available, authority.Availability);
+        Assert.False(authority.MintAuthorityEnabled);
+        Assert.True(authority.FreezeAuthorityEnabled);
+        Assert.Equal(EvidenceAvailability.Available, holders.Availability);
+        Assert.Equal(1_000, holders.CreatorHoldingBasisPoints);
+        Assert.Equal(6_000, holders.Top10HoldingBasisPoints);
+        Assert.Equal(201UL, holders.AsOfSlot);
+    }
+
+    private static RaydiumCpmmPoolSnapshot PoolSnapshot(
+        DateTimeOffset asOfTime) => new(
+        "pool",
+        RaydiumCpmmSellQuoteEvidenceSource.CpmmProgramId,
+        "adapter-v1",
+        "token",
+        "quote",
+        RaydiumCpmmSellQuoteEvidenceSource.ClassicTokenProgramId,
+        RaydiumCpmmSellQuoteEvidenceSource.ClassicTokenProgramId,
+        BigInteger.Parse("16137545623432"),
+        BigInteger.Parse("12404532310903"),
+        TradingFeeBasisPoints: 25,
+        CreatorFeeBasisPoints: 5,
+        AsOfSlot: 100,
+        asOfTime);
 
     private static HttpResponseMessage Json(
         HttpStatusCode statusCode,

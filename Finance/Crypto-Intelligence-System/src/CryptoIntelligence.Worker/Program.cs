@@ -1,5 +1,6 @@
 using CryptoIntelligence.Application.Configuration;
 using CryptoIntelligence.Application.Ingestion;
+using CryptoIntelligence.Application.Intelligence;
 using CryptoIntelligence.Application.Radar;
 using CryptoIntelligence.Infrastructure.Persistence;
 using CryptoIntelligence.Infrastructure.Solana;
@@ -20,6 +21,10 @@ builder.Services.AddSingleton(snapshot);
 builder.Services.AddSingleton<ISolanaTransactionAdapter>(
     RaydiumTransactionAdapter.CreatePinned(
         mvpConfiguration!.Source.AdapterVersion));
+builder.Services.AddSingleton<IRaydiumSellQuoteEvidenceSource>(
+    new RaydiumCpmmSellQuoteEvidenceSource(
+        mvpConfiguration.Source.AdapterVersion,
+        mvpConfiguration.Risk.HardReject.MaximumMarketDataAgeSeconds));
 
 var connectionString =
     builder.Configuration.GetConnectionString("Postgres")
@@ -31,6 +36,7 @@ builder.Services.AddCryptoIntelligencePersistence(connectionString);
 builder.Services.AddScoped<IRawEventHandler, SolanaAdapterRawEventHandler>();
 builder.Services.AddScoped<IProjectionEventHandler, RadarProjectionHandler>();
 builder.Services.AddScoped<DurableRawEventDispatcher>();
+builder.Services.AddScoped<RiskEvidenceCollector>();
 builder.Services.AddScoped(provider => new SolanaBackfillReconciliationService(
     provider.GetRequiredService<ISolanaBackfillSource>(),
     provider.GetRequiredService<ISolanaTransactionSource>(),
@@ -112,6 +118,29 @@ static void ConfigureSolanaSources(
 
         return new FallbackSolanaBackfillSource(sources);
     });
+    services.AddSingleton<ISolanaTokenRiskEvidenceSource>(_ =>
+    {
+        var sources = new List<ISolanaTokenRiskEvidenceSource>
+        {
+            CreateTokenEvidenceSource(
+                primaryEndpoint,
+                configuration.Source.RpcSourceName)
+        };
+        var fallbackUrl = Environment.GetEnvironmentVariable(
+            "SOLANA_RPC_FALLBACK_HTTP_URL");
+        if (!string.IsNullOrWhiteSpace(fallbackUrl))
+        {
+            sources.Add(CreateTokenEvidenceSource(
+                RequireEndpoint(
+                    fallbackUrl,
+                    "SOLANA_RPC_FALLBACK_HTTP_URL",
+                    Uri.UriSchemeHttp,
+                    Uri.UriSchemeHttps),
+                configuration.Source.FallbackRpcSourceName ?? "fallback"));
+        }
+
+        return new FallbackSolanaTokenRiskEvidenceSource(sources);
+    });
     services.AddScoped<IRawEventHandler, SolanaDiscoveryRawEventHandler>();
 }
 
@@ -125,6 +154,17 @@ static SolanaRpcTransactionSource CreateRpcSource(Uri endpoint, string sourceNam
         sourceName);
 
 static SolanaRpcBackfillSource CreateBackfillSource(
+    Uri endpoint,
+    string sourceName) =>
+    new(
+        new HttpClient
+        {
+            BaseAddress = endpoint,
+            Timeout = TimeSpan.FromSeconds(30)
+        },
+        sourceName);
+
+static SolanaTokenRiskEvidenceSource CreateTokenEvidenceSource(
     Uri endpoint,
     string sourceName) =>
     new(
