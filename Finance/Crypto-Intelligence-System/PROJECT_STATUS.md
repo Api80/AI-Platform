@@ -1,7 +1,7 @@
 # Crypto Intelligence System Project Status
 
 > 更新时间：2026-07-28  
-> 状态：Phase 1 MVP 设计与实施准备  
+> 状态：Phase 1 MVP 方案完成，Ready for Adapter Spike  
 > 代码实施进度：尚未开始
 
 ## 1. Project Positioning
@@ -111,7 +111,7 @@ Phase 1 不实现完整 Wallet Intelligence、AI 交易模型、多 DEX、多链
 | Reliability ADRs | Completed | 尚未转化为代码和测试 |
 | Paper execution specification | Completed | 尚未实现 Adapter Quote |
 | Strategy validation protocol | Completed | 尚无真实样本 |
-| Phase 1 MVP detailed design | In progress | 需要从长期方案中裁剪实施范围 |
+| Phase 1 MVP detailed design | Completed | MVP Design、Configuration 和 Implementation Plan 已完成 |
 | Adapter selection spike | Not started | Launch Source、AMM、ProgramId 尚未选择 |
 | Solution/code | Not started | 当前仓库只有设计文档 |
 | Database migrations | Not started | 等待 MVP 物理模型 |
@@ -203,13 +203,13 @@ Phase 1 的买卖判断以可复现、可回放的规则策略为基线。
 
 ## 10. Next Actions
 
-1. 完成 `PHASE1_MVP_DESIGN.md`；
-2. 完成 `PHASE1_MVP_IMPLEMENTATION_PLAN.md`；
-3. 完成 `PHASE1_MVP_CONFIGURATION.md`；
-4. 执行 Adapter Selection Spike；
-5. 固化第一批 ProgramId 和交易样本；
-6. 创建 .NET Solution 和数据库迁移；
-7. 按 MVP Milestone 开始开发。
+1. 执行 Adapter Selection Spike；
+2. 选择首个 Launch Source 和 AMM/Pool Adapter；
+3. 固化 ProgramId、Fixtures、ParserVersion、Quote 和 Backfill 方法；
+4. 回填 MVP Configuration 必需参数；
+5. 创建 .NET Solution 和数据库迁移；
+6. 按 MVP Milestone 开始开发；
+7. 稳定采集 7 天后完成容量和 SLO 复审。
 
 ## 11. Current Assessment
 
@@ -220,4 +220,4 @@ Phase 1 的买卖判断以可复现、可回放的规则策略为基线。
 - 规则策略扣除全部执行成本后仍有优势；
 - 系统能够诚实记录无法成交和无法退出。
 
-当前设计基础已完成，下一阶段重点不是继续扩大架构，而是完成 Phase 1 MVP 详细方案并开始单来源闭环实施。
+当前长期架构、Phase 1 MVP 设计、配置规范和实施计划均已完成。下一阶段不再继续扩展设计范围，直接从 Adapter Selection Spike 开始单来源闭环实施。
