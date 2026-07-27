@@ -1,8 +1,10 @@
 using CryptoIntelligence.Api;
 using CryptoIntelligence.Application.Configuration;
 using CryptoIntelligence.Application.Ingestion;
+using CryptoIntelligence.Application.Intelligence;
 using CryptoIntelligence.Application.Radar;
 using CryptoIntelligence.Contracts;
+using CryptoIntelligence.Domain.Intelligence;
 using CryptoIntelligence.Domain.Radar;
 using CryptoIntelligence.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -20,6 +22,7 @@ var configurationSnapshot = ConfigurationSnapshotFactory.Create(
     DateTimeOffset.UtcNow);
 builder.Services.AddSingleton(mvpConfiguration!);
 builder.Services.AddSingleton(configurationSnapshot);
+builder.Services.AddSingleton<IntelligenceEvaluationService>();
 
 var connectionString =
     builder.Configuration.GetConnectionString("Postgres")
@@ -41,7 +44,7 @@ app.MapGet(
     "/api/v1/system/status",
     (ConfigurationSnapshot snapshot) => new SystemStatusResponse(
         "Crypto Intelligence API",
-        "M2 Reliable Ingestion Exit Validation",
+        "M3 Theme and Minimal Risk",
         snapshot.ConfigurationVersion,
         snapshot.ConfigurationHash,
         DateTimeOffset.UtcNow));
@@ -159,6 +162,68 @@ app.MapGet(
                 .ToArray()));
     });
 
+app.MapPost(
+    "/api/v1/intelligence/evaluate",
+    (
+        IntelligenceEvaluationRequest request,
+        IntelligenceEvaluationService service) =>
+    {
+        if (request.InputAsOfTime < request.DiscoveredAt)
+        {
+            return Results.BadRequest(new
+            {
+                error = "inputAsOfTime cannot be earlier than discoveredAt."
+            });
+        }
+
+        SellQuoteEvidence? sellQuote = null;
+        if (request.SellQuote is not null)
+        {
+            if (!Enum.TryParse<SellQuoteStatus>(
+                    request.SellQuote.Status,
+                    ignoreCase: true,
+                    out var status))
+            {
+                return Results.BadRequest(new
+                {
+                    error = $"Unknown sell quote status '{request.SellQuote.Status}'."
+                });
+            }
+
+            sellQuote = new SellQuoteEvidence(
+                status,
+                request.SellQuote.InputBaseAmount,
+                request.SellQuote.OutputQuoteAmount,
+                request.SellQuote.PriceImpactBasisPoints,
+                request.SellQuote.AsOfTime,
+                request.SellQuote.AdapterVersion,
+                request.SellQuote.FailureReason);
+        }
+
+        var result = service.Evaluate(new IntelligenceEvaluationInput(
+            request.TokenName,
+            request.Symbol,
+            request.DiscoveredAt,
+            request.InputAsOfTime,
+            request.HasUsableLiquidity,
+            new RiskEvidenceSnapshot(
+                request.InputAsOfTime,
+                request.MarketAsOfTime,
+                request.QuoteReserveRaw,
+                request.EntryPriceImpactBasisPoints,
+                request.LiquidityDropBasisPoints,
+                request.MintAuthorityEnabled,
+                request.FreezeAuthorityEnabled,
+                request.AdapterAuthorityRisk,
+                request.CreatorHoldingBasisPoints,
+                request.Top10HoldingBasisPoints,
+                request.PoolVersionSupported,
+                request.IsFinalized,
+                request.IsReconciled,
+                sellQuote)));
+        return Results.Ok(ToIntelligenceResponse(result));
+    });
+
 app.MapHealthChecks(
     "/health/live",
     new HealthCheckOptions
@@ -185,5 +250,35 @@ static RadarCandidateResponse ToResponse(RadarCandidateReadModel value) => new(
     value.PoolCount,
     value.QuoteTokenAddress,
     value.LatestFeaturesJson);
+
+static IntelligenceEvaluationResponse ToIntelligenceResponse(
+    IntelligenceEvaluationResult value) => new(
+    new ThemeMatchResponse(
+        value.Theme.Matched,
+        value.Theme.Blocked,
+        value.Theme.ConfigurationValid,
+        value.Theme.ThemeScore,
+        value.Theme.MatchedThemes,
+        value.Theme.MatchReasons,
+        value.Theme.InputAsOfTime,
+        value.Theme.ConfigurationVersion),
+    new RiskAssessmentResponse(
+        value.Risk.OverallScore,
+        value.Risk.RiskLevel.ToString(),
+        value.Risk.HardReject,
+        value.Risk.RuleResults.Select(rule => new RiskRuleResponse(
+                rule.RuleId,
+                rule.Outcome.ToString(),
+                rule.HardReject,
+                rule.RiskScore,
+                rule.Reason))
+            .ToArray(),
+        value.Risk.Reasons,
+        value.Risk.InputAsOfTime,
+        value.Risk.RiskModelVersion),
+    new CandidateEligibilityResponse(
+        value.Candidate.Status.ToString(),
+        value.Candidate.Reasons,
+        value.Candidate.EvaluatedAt));
 
 public partial class Program;

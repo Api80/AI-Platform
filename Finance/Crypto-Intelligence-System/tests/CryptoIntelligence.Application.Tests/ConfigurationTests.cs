@@ -57,7 +57,10 @@ public sealed class ConfigurationTests
                 RpcSourceName = original.Source.RpcSourceName,
                 RequireReconciledData = false
             },
-            Radar = original.Radar
+            Radar = original.Radar,
+            Storage = original.Storage,
+            Theme = original.Theme,
+            Risk = original.Risk
         };
 
         var errors = MvpConfigurationValidator.Validate(configuration);
@@ -89,7 +92,9 @@ public sealed class ConfigurationTests
             Storage = new StorageConfiguration
             {
                 PartitionAheadMonths = 0
-            }
+            },
+            Theme = original.Theme,
+            Risk = original.Risk
         };
 
         var errors = MvpConfigurationValidator.Validate(configuration);
@@ -119,6 +124,14 @@ public sealed class ConfigurationTests
             ],
             FixtureCoverageStartSlot = 339103624,
             RpcSourceName = "solana-public-development"
+        },
+        Theme = new ThemeConfiguration
+        {
+            ConfigurationVersion = "theme-rules-v1"
+        },
+        Risk = new RiskConfiguration
+        {
+            ModelVersion = "risk-rules-v1"
         }
     };
 }
@@ -133,6 +146,9 @@ internal static class ConfigurationTestExtensions
             ConfigurationVersion = configuration.ConfigurationVersion,
             FormalRun = configuration.FormalRun,
             Source = source,
-            Radar = configuration.Radar
+            Radar = configuration.Radar,
+            Storage = configuration.Storage,
+            Theme = configuration.Theme,
+            Risk = configuration.Risk
         };
 }

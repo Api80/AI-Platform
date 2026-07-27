@@ -40,3 +40,37 @@ GET {{HostAddress}}/api/v1/ingestion/capacity
 Accept: application/json
 
 ###
+
+POST {{HostAddress}}/api/v1/intelligence/evaluate
+Content-Type: application/json
+
+{
+  "tokenName": "Example AI",
+  "symbol": "EAI",
+  "discoveredAt": "2026-07-28T00:00:00Z",
+  "inputAsOfTime": "2026-07-28T00:01:00Z",
+  "hasUsableLiquidity": true,
+  "marketAsOfTime": "2026-07-28T00:00:58Z",
+  "quoteReserveRaw": 1000000,
+  "entryPriceImpactBasisPoints": 100,
+  "liquidityDropBasisPoints": 0,
+  "mintAuthorityEnabled": false,
+  "freezeAuthorityEnabled": false,
+  "adapterAuthorityRisk": false,
+  "creatorHoldingBasisPoints": 100,
+  "top10HoldingBasisPoints": 1000,
+  "poolVersionSupported": true,
+  "isFinalized": true,
+  "isReconciled": true,
+  "sellQuote": {
+    "status": "Available",
+    "inputBaseAmount": 1000,
+    "outputQuoteAmount": 100,
+    "priceImpactBasisPoints": 100,
+    "asOfTime": "2026-07-28T00:00:58Z",
+    "adapterVersion": "raydium-launchlab-cpmm-m0-v1",
+    "failureReason": null
+  }
+}
+
+###
