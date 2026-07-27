@@ -17,6 +17,14 @@ Phase 1: Solana New Token Radar & Paper Trading
 - 建立模拟交易系统；
 - 验证短线策略是否具有统计优势。
 
+## 设计评审
+
+当前修订方案：
+
+- [Design Proposal V2](./DESIGN_PROPOSAL_V2.md) — Phase 1 修订架构，以及 Phase 2 Wallet Intelligence、Phase 3 AI Intelligence 的扩展设计；当前状态为 Proposed / 待评审。
+
+评审通过前，现有设计文档继续保留；通过后再统一更新系统设计、服务架构、数据库设计和 Phase 1 技术设计。
+
 ## 长期路线
 
 ```text
