@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "adapter-fixture-manifest-v1",
+  "network": "solana-mainnet-beta",
+  "capturedAtUtc": "2026-07-28T00:00:00Z",
+  "status": "in-progress",
+  "versionPins": {
+    "raydiumIdlCommit": "e7e0c96fe77bcf6a020b84a44c47a722aac8e359",
+    "launchLabIdlBlob": "70186e3f02c2bead7e5a9a92453104df853683ed",
+    "cpmmIdlBlob": "923d272a4e56643ef7fece05ca137c036b0295de",
+    "raydiumSdkReferenceCommit": "fb2d829a559f9b6ca95922e4e6c69e3b5bddc95c"
+  },
+  "programs": {
+    "launchLab": "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj",
+    "cpmm": "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C"
+  },
+  "fixtures": [
+    {
+      "id": "launchlab-initialize-and-initial-buy",
+      "signature": "2VK2czyFmfXbDpxchELZpjKrwmN61GNZBd2B2HpdsQLr2gVFVvdk4k7unJ4WCNCtMpUTHWhiukzjbupRQPiyWGKu",
+      "slot": 351438360,
+      "programId": "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj",
+      "pool": "2D6WpsrRq66mUMxLccS3xbpi2rTN3nVZw3bJHguQD8Sr",
+      "baseMint": "8AxzfT6fn8EJiRNN4LT68FwygFnFxdr4uT3aMzsxbonk",
+      "expectedInstructions": ["Initialize", "BuyExactIn"],
+      "expectedDomainEvents": ["MintCreated", "PoolCreated", "SwapObserved", "TokenTransferred"],
+      "transactionOutcome": "success",
+      "rawPayloadStatus": "pending-commit"
+    },
+    {
+      "id": "launchlab-buy-exact-in",
+      "signature": "Ff6cG3PZbQC7fw2ji1S1bzjbTJ7ZCGovCxA2fprhaBNQN6a3YRWyRFKE2dStVqU99sA38v5Kd9FJz9kP1NMyZ78",
+      "slot": 435594632,
+      "programId": "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj",
+      "pool": "ETQZ1YfnhDTgqY5QKn1QxPnX1ehkr9zDETDzyFWLQ9uW",
+      "baseMint": "BGgckuXtta9v6bwxHBqYk3NsdpgKYAF3AbNKv5MDbonk",
+      "expectedInstructions": ["BuyExactIn"],
+      "expectedDomainEvents": ["SwapObserved", "TokenTransferred"],
+      "transactionOutcome": "success",
+      "rawPayloadStatus": "pending-commit"
+    },
+    {
+      "id": "launchlab-sell-exact-in",
+      "signature": "4i8Urp3wvshcYg2bPjumtTgqj8wfJReaVpcThA9qcnxEyE633WrRWLvneBwvnCRJZgEDiRtjxCkNnr2L6p2M7Kig",
+      "slot": 435594633,
+      "programId": "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj",
+      "expectedInstructions": ["SellExactIn"],
+      "expectedDomainEvents": ["SwapObserved", "TokenTransferred"],
+      "transactionOutcome": "success",
+      "rawPayloadStatus": "pending-commit"
+    },
+    {
+      "id": "launchlab-multi-program-multi-event",
+      "signature": "CLAY5wo1MLN3FXbKnzQBYnJS24gjwFAT21GoEAtqpN7MVkpGuPMzt31krBE4kYyEReE31nKS98vQLgy4zvV717V",
+      "slot": 435594580,
+      "programId": "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj",
+      "pool": "2D6WpsrRq66mUMxLccS3xbpi2rTN3nVZw3bJHguQD8Sr",
+      "baseMint": "8AxzfT6fn8EJiRNN4LT68FwygFnFxdr4uT3aMzsxbonk",
+      "expectedInstructions": ["SwapWithDestination", "BuyExactIn"],
+      "expectedProgramDataCount": 2,
+      "expectedDomainEvents": ["SwapObserved", "TokenTransferred"],
+      "transactionOutcome": "success",
+      "rawPayloadStatus": "pending-commit"
+    },
+    {
+      "id": "launchlab-failed-transaction",
+      "signature": "2CfGoG254PHemkbKJBuKn3RvuiRELLMET9ceTmsK6wU3aLDsRutygHUWN2ysJcE6JsNFn5z9cN8Mg3S2CZMokfEh",
+      "slot": 435594871,
+      "programId": "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj",
+      "pool": "ETQZ1YfnhDTgqY5QKn1QxPnX1ehkr9zDETDzyFWLQ9uW",
+      "expectedDomainEvents": [],
+      "transactionOutcome": "failed",
+      "expectedError": {"InstructionError": [2, {"Custom": 6000}]},
+      "rawPayloadStatus": "pending-commit"
+    },
+    {
+      "id": "cpmm-swap-base-input",
+      "signature": "5XxcFXGiK47v7GkqM22J2LA2Bst46Mm2Lm4ob1YuyZzTaziXmimD66EiM9JQFZi9A3GPg8mcZrJSgKyQTBJUgTGN",
+      "slot": 435594361,
+      "programId": "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C",
+      "expectedInstructions": ["SwapBaseInput"],
+      "expectedDomainEvents": ["SwapObserved", "TokenTransferred"],
+      "transactionOutcome": "success",
+      "rawPayloadStatus": "pending-commit"
+    },
+    {
+      "id": "launchlab-migrated-cpmm-pool",
+      "signature": null,
+      "slot": null,
+      "programId": "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C",
+      "pool": "Q2sPHPdUWFMg7M7wwrQKLrn619cAucfRsmhVJffodSp",
+      "baseMint": "Dz9mQ9NzkBcCsuGPFJ3r1bS4wgqKMHBPiVuniW8Mbonk",
+      "quoteMint": "So11111111111111111111111111111111111111112",
+      "externalEvidence": {"source": "Raydium API", "launchMigratePool": true},
+      "expectedDomainEvents": ["PoolCreated", "LiquidityChanged"],
+      "rawPayloadStatus": "migration-signature-pending"
+    }
+  ],
+  "missingRequiredFixtures": [
+    "cpmm-initialize-or-launchlab-migrate-to-cpswap",
+    "liquidity-added",
+    "liquidity-removed",
+    "unsupported-program-version",
+    "committed-raw-json-payloads"
+  ]
+}
