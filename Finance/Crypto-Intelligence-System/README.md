@@ -17,13 +17,38 @@ Phase 1: Solana New Token Radar & Paper Trading
 - 建立模拟交易系统；
 - 验证短线策略是否具有统计优势。
 
-## 设计评审
+## 当前设计基线
 
-当前修订方案：
+以下文档共同构成当前待评审的 Phase 1 设计基线，阅读顺序如下：
 
-- [Design Proposal V2](./DESIGN_PROPOSAL_V2.md) — Phase 1 修订架构，以及 Phase 2 Wallet Intelligence、Phase 3 AI Intelligence 的扩展设计；当前状态为 Proposed / 待评审。
+1. [DESIGN_PROPOSAL_V2.md](./DESIGN_PROPOSAL_V2.md)  
+   总体架构、核心原则、Phase 2/3 扩展方向和待评审决策。
 
-评审通过前，现有设计文档继续保留；通过后再统一更新系统设计、服务架构、数据库设计和 Phase 1 技术设计。
+2. [DOMAIN_MODEL.md](./DOMAIN_MODEL.md)  
+   领域概念、边界、不变量，以及 Risk、Signal、Decision、Execution 的职责划分。
+
+3. [DATA_MODEL_DESIGN.md](./DATA_MODEL_DESIGN.md)  
+   Phase 1 逻辑数据模型、关系、唯一约束、版本化、幂等和 Paper Trading 模型。
+
+4. [DEVELOPMENT_PLAN_PHASE1.md](./DEVELOPMENT_PLAN_PHASE1.md)  
+   开发顺序、测试要求、里程碑交付物和验收门槛。
+
+当前状态：`Proposed / 待评审`。
+
+评审通过后，上述四份文档将作为正式实施基线，并将关键技术选择拆分为 ADR。
+
+## 历史设计文档
+
+以下文档保留用于记录方案演进，但不应作为当前实现依据：
+
+- [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md) — Historical / Superseded；
+- [SERVICE_ARCHITECTURE.md](./SERVICE_ARCHITECTURE.md) — Historical / Superseded；
+- [DATABASE_DESIGN.md](./DATABASE_DESIGN.md) — Historical / Superseded；
+- [TECH_DESIGN_PHASE1.md](./TECH_DESIGN_PHASE1.md) — Historical / Superseded；
+- [ARCHITECTURE_REVIEW.md](./ARCHITECTURE_REVIEW.md) — 历史评审记录；
+- [ROADMAP.md](./ROADMAP.md) — 产品阶段路线，具体实施以当前设计基线为准。
+
+如果历史文档与当前设计基线冲突，以当前设计基线为准。
 
 ## 长期路线
 
@@ -50,4 +75,7 @@ Phase 5
 2. 风控优先：先判断风险，再考虑交易。
 3. 模拟优先：验证策略后再考虑真实执行。
 4. 模块化：数据、分析、策略、执行相互独立。
+5. 可追溯：所有决策都能追溯到特征、规则和原始事件。
+6. 可复现：相同数据和版本化配置产生相同结果。
+7. 可扩展：Phase 1 数据底座能够支持 Wallet Intelligence 和 AI Intelligence。
 
