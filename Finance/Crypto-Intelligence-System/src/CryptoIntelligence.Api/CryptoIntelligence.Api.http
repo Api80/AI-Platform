@@ -1,0 +1,17 @@
+@HostAddress = http://localhost:5264
+
+GET {{HostAddress}}/health/live
+X-Correlation-ID: local-health-check
+
+###
+
+GET {{HostAddress}}/health/ready
+X-Correlation-ID: local-readiness-check
+
+###
+
+GET {{HostAddress}}/api/v1/system/status
+Accept: application/json
+X-Correlation-ID: local-status-check
+
+###

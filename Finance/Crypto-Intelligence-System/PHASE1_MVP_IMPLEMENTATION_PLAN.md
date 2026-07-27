@@ -219,6 +219,9 @@ TokenTransferred
 
 ## 6. Milestone 1: Foundation
 
+> 状态：In progress
+> 实施记录：[M1_FOUNDATION.md](./M1_FOUNDATION.md)
+
 ### Objective
 
 建立可编译、可测试、可迁移和可观测的模块化单体工程。
