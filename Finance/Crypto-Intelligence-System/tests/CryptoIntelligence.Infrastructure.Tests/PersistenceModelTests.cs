@@ -134,6 +134,9 @@ public sealed class PersistenceModelTests
             index => index.IsUnique &&
                      index.GetDatabaseName() ==
                      "ux_risk_assessments_token_version_time");
+        Assert.Equal(
+            "jsonb",
+            risk.FindProperty("Evidence")?.GetColumnType());
     }
 
     private static CryptoIntelligenceDbContext CreateContext()

@@ -97,6 +97,7 @@ risk:
   scoreMinimum: 0
   scoreMaximum: 100
   maximumAllowedRiskScore: null
+  sellQuoteProbeReserveBasisPoints: 100
 
   hardReject:
     requireSellQuote: true

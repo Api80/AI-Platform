@@ -144,6 +144,7 @@ static void ConfigureSolanaSources(
         return new FallbackSolanaTokenRiskEvidenceSource(sources);
     });
     services.AddScoped<IRawEventHandler, SolanaDiscoveryRawEventHandler>();
+    services.AddScoped<IProjectionEventHandler, AutomatedRiskAssessmentHandler>();
 }
 
 static SolanaRpcTransactionSource CreateRpcSource(Uri endpoint, string sourceName) =>

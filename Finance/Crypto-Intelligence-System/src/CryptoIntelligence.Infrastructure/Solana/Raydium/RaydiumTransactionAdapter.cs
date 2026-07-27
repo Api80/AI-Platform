@@ -110,7 +110,9 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
                 .Select(value => value.GetString() ?? string.Empty)
                 .ToArray());
         var decoded = MergeEventRepresentations(instructionEvents, logEvents);
-        var derived = DeriveInstructionEvents(instructions);
+        var derived = EnrichDerivedEvents(
+            DeriveInstructionEvents(instructions),
+            decoded);
         var events = decoded
             .Where(value => value.Source == "TokenInstruction")
             .Concat(derived)
@@ -204,6 +206,7 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
             : null;
         if (eventName is not null)
         {
+            var eventData = data.AsSpan(8);
             events.Add(new DecodedEvent(
                 programId,
                 eventName,
@@ -211,8 +214,8 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
                 innerInstructionIndex,
                 MapDomainEvent(eventName),
                 "SelfCpi",
-                Fingerprint(data.AsSpan(8)),
-                null));
+                Fingerprint(eventData),
+                DecodeEventAttributes(programId, eventName, eventData)));
             return;
         }
 
@@ -297,7 +300,10 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
                     MapDomainEvent(eventName),
                     "ProgramData",
                     Fingerprint(data),
-                    null));
+                    DecodeEventAttributes(
+                        callStack.Peek(),
+                        eventName,
+                        data)));
             }
         }
 
@@ -375,6 +381,47 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
         return result;
     }
 
+    private static IReadOnlyList<DecodedEvent> EnrichDerivedEvents(
+        IReadOnlyList<DecodedEvent> derived,
+        IReadOnlyList<DecodedEvent> decoded)
+    {
+        var evidence = decoded
+            .Where(value =>
+                value.Attributes is not null &&
+                value.Source is "ProgramData" or "SelfCpi")
+            .GroupBy(value => (value.ProgramId, value.DomainEventType))
+            .ToDictionary(
+                group => group.Key,
+                group => new Queue<DecodedEvent>(group));
+        var result = new List<DecodedEvent>(derived.Count);
+        foreach (var value in derived)
+        {
+            if (!evidence.TryGetValue(
+                    (value.ProgramId, value.DomainEventType),
+                    out var candidates) ||
+                candidates.Count == 0)
+            {
+                result.Add(value);
+                continue;
+            }
+
+            var eventEvidence = candidates.Dequeue();
+            var attributes = value.Attributes is null
+                ? new Dictionary<string, string>(StringComparer.Ordinal)
+                : new Dictionary<string, string>(
+                    value.Attributes,
+                    StringComparer.Ordinal);
+            foreach (var (key, attributeValue) in eventEvidence.Attributes!)
+            {
+                attributes[key] = attributeValue;
+            }
+
+            result.Add(value with { Attributes = attributes });
+        }
+
+        return result;
+    }
+
     private static DecodedEvent Derived(
         DecodedInstruction instruction,
         string eventType) => new(
@@ -432,6 +479,13 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
             {
                 case "initialize" when accounts.Length >= 6:
                     AddCore(values, accounts[3], accounts[4], accounts[5], accounts[0]);
+                    values["creator_address"] = accounts[0];
+                    values["amm_config_address"] = accounts[1];
+                    if (accounts.Length >= 17)
+                    {
+                        values["base_token_program_id"] = accounts[15];
+                        values["quote_token_program_id"] = accounts[16];
+                    }
                     values["base_reserve"] = U64(data, 8).ToString();
                     values["quote_reserve"] = U64(data, 16).ToString();
                     values["base_amount"] = values["base_reserve"];
@@ -440,6 +494,13 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
                     break;
                 case "swap_base_input" when accounts.Length >= 12:
                     AddCore(values, accounts[3], accounts[10], accounts[11], accounts[0]);
+                    values["amm_config_address"] = accounts[2];
+                    values["input_mint"] = accounts[10];
+                    values["output_mint"] = accounts[11];
+                    values["input_token_program_id"] = accounts[8];
+                    values["output_token_program_id"] = accounts[9];
+                    values["input_vault"] = accounts[6];
+                    values["output_vault"] = accounts[7];
                     values["base_amount"] = U64(data, 8).ToString();
                     values["quote_amount"] = U64(data, 16).ToString();
                     values["side"] = "Unknown";
@@ -460,6 +521,83 @@ public sealed class RaydiumTransactionAdapter : ISolanaTransactionAdapter
         }
 
         return values;
+    }
+
+    private static IReadOnlyDictionary<string, string>? DecodeEventAttributes(
+        string programId,
+        string eventName,
+        ReadOnlySpan<byte> data)
+    {
+        if (programId != CpmmProgramId ||
+            eventName != "SwapEvent" ||
+            data.Length < 170)
+        {
+            return null;
+        }
+
+        var inputAmount = U64(data, 56);
+        var tradeFee = U64(data, 153);
+        var creatorFee = U64(data, 161);
+        var creatorFeeOnInput = data[169] != 0;
+        var tradingFeeBasisPoints = UniqueBasisPoints(inputAmount, tradeFee);
+        var creatorFeeBasisPoints = creatorFeeOnInput
+            ? UniqueBasisPoints(inputAmount, creatorFee)
+            : null;
+        var feeEvidenceSupported =
+            data[88] != 0 &&
+            creatorFeeOnInput &&
+            tradingFeeBasisPoints.HasValue &&
+            creatorFeeBasisPoints.HasValue;
+        var result = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["input_vault_before"] = U64(data, 40).ToString(),
+            ["output_vault_before"] = U64(data, 48).ToString(),
+            ["input_amount"] = inputAmount.ToString(),
+            ["output_amount"] = U64(data, 64).ToString(),
+            ["input_transfer_fee"] = U64(data, 72).ToString(),
+            ["output_transfer_fee"] = U64(data, 80).ToString(),
+            ["trade_fee"] = tradeFee.ToString(),
+            ["creator_fee"] = creatorFee.ToString(),
+            ["base_input"] = (data[88] != 0).ToString(),
+            ["creator_fee_on_input"] = creatorFeeOnInput.ToString(),
+            ["fee_evidence_supported"] = feeEvidenceSupported.ToString()
+        };
+        if (tradingFeeBasisPoints.HasValue)
+        {
+            result["trading_fee_bps"] =
+                tradingFeeBasisPoints.Value.ToString();
+        }
+
+        if (creatorFeeBasisPoints.HasValue)
+        {
+            result["creator_fee_bps"] =
+                creatorFeeBasisPoints.Value.ToString();
+        }
+
+        return result;
+    }
+
+    private static int? UniqueBasisPoints(ulong amount, ulong fee)
+    {
+        if (amount == 0)
+        {
+            return null;
+        }
+
+        if (fee == 0)
+        {
+            return 0;
+        }
+
+        var amountValue = new BigInteger(amount);
+        var feeValue = new BigInteger(fee);
+        var lower =
+            ((feeValue - BigInteger.One) * 10_000 / amountValue) +
+            BigInteger.One;
+        var upper = feeValue * 10_000 / amountValue;
+        return lower == upper && lower >= 0 && lower < 10_000
+            ? checked((int)lower)
+            : null;
     }
 
     private static void AddCore(

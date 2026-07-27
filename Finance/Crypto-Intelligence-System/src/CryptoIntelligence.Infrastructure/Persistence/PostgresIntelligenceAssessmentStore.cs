@@ -17,11 +17,19 @@ public sealed class PostgresIntelligenceAssessmentStore(
     public async Task<StoredIntelligenceEvaluation> SaveAsync(
         string tokenAddress,
         IntelligenceEvaluationResult evaluation,
+        RiskEvidenceSnapshot evidence,
         CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(tokenAddress);
         ArgumentNullException.ThrowIfNull(evaluation);
+        ArgumentNullException.ThrowIfNull(evidence);
         ValidateTimes(evaluation);
+        if (evidence.InputAsOfTime != evaluation.Risk.InputAsOfTime)
+        {
+            throw new ArgumentException(
+                "Risk evidence and evaluation must share one AsOfTime.",
+                nameof(evidence));
+        }
 
         var target = await (
                 from candidate in context.TokenCandidates
@@ -62,12 +70,12 @@ public sealed class PostgresIntelligenceAssessmentStore(
         var riskCreated = risk is null;
         if (risk is null)
         {
-            risk = CreateRisk(target.token.Id, evaluation.Risk);
+            risk = CreateRisk(target.token.Id, evaluation.Risk, evidence);
             context.RiskAssessments.Add(risk);
         }
         else
         {
-            EnsureSameRisk(risk, evaluation.Risk);
+            EnsureSameRisk(risk, evaluation.Risk, evidence);
         }
 
         var candidateStatus = ToCandidateStatus(evaluation.Candidate.Status);
@@ -124,7 +132,8 @@ public sealed class PostgresIntelligenceAssessmentStore(
 
     private static RiskAssessmentEntity CreateRisk(
         Guid tokenId,
-        RiskAssessment value) => new()
+        RiskAssessment value,
+        RiskEvidenceSnapshot evidence) => new()
         {
             Id = Guid.NewGuid(),
             TokenId = tokenId,
@@ -134,6 +143,7 @@ public sealed class PostgresIntelligenceAssessmentStore(
             HardReject = value.HardReject,
             RuleResults = Serialize(value.RuleResults),
             Reasons = Serialize(value.Reasons),
+            Evidence = JsonSerializer.Serialize(evidence, JsonOptions),
             InputAsOfTime = value.InputAsOfTime,
             RiskModelVersion = value.RiskModelVersion,
             CreatedTime = DateTimeOffset.UtcNow
@@ -161,7 +171,8 @@ public sealed class PostgresIntelligenceAssessmentStore(
 
     private static void EnsureSameRisk(
         RiskAssessmentEntity stored,
-        RiskAssessment value)
+        RiskAssessment value,
+        RiskEvidenceSnapshot evidence)
     {
         if (stored.OverallScore != value.OverallScore ||
             stored.RiskLevel != value.RiskLevel ||
@@ -169,11 +180,19 @@ public sealed class PostgresIntelligenceAssessmentStore(
             !JsonSequenceEquals<RiskRuleResult>(
                 stored.RuleResults,
                 value.RuleResults) ||
-            !JsonSequenceEquals<string>(stored.Reasons, value.Reasons))
+            !JsonSequenceEquals<string>(stored.Reasons, value.Reasons) ||
+            stored.Evidence is not null &&
+            !JsonObjectEquals(stored.Evidence, evidence))
         {
             throw new InvalidOperationException(
                 "Risk evaluation identity already exists with different content.");
         }
+    }
+
+    private static bool JsonObjectEquals<T>(string json, T expected)
+    {
+        var stored = JsonSerializer.Deserialize<T>(json, JsonOptions);
+        return EqualityComparer<T>.Default.Equals(stored, expected);
     }
 
     private static void ValidateTimes(IntelligenceEvaluationResult evaluation)

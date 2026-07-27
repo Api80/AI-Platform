@@ -1,3 +1,5 @@
+using CryptoIntelligence.Domain.Intelligence;
+
 namespace CryptoIntelligence.Application.Intelligence;
 
 public sealed record StoredIntelligenceEvaluation(
@@ -11,6 +13,7 @@ public interface IIntelligenceAssessmentStore
     Task<StoredIntelligenceEvaluation> SaveAsync(
         string tokenAddress,
         IntelligenceEvaluationResult evaluation,
+        RiskEvidenceSnapshot evidence,
         CancellationToken cancellationToken);
 }
 
@@ -32,6 +35,7 @@ public sealed class IntelligenceAssessmentService(
         var stored = await store.SaveAsync(
             tokenAddress,
             evaluation,
+            input.RiskEvidence,
             cancellationToken);
         return new PersistedIntelligenceEvaluation(evaluation, stored);
     }

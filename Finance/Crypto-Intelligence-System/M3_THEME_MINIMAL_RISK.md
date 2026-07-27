@@ -1,6 +1,6 @@
 # M3 Theme and Minimal Risk
 
-> 状态：M3A Rule Engine、M3B Evidence Components、M3C Assessment Persistence complete；真实链上证据触发待完成
+> 状态：M3A-M3D code complete；Docker PostgreSQL 验证通过；真实 Solana RPC 连续运行验收待完成
 
 ## 目标
 
@@ -108,24 +108,62 @@ POST /api/v1/intelligence/evaluate
 - 重复写、冲突写、Candidate 关联和 Radar 查询已通过真实 PostgreSQL 集成测试；
 - GitHub CI 在迁移后单独执行 PostgreSQL 持久化测试。
 
+## M3D 已完成
+
+### 同 Slot CPMM 证据
+
+- 解码固定 IDL 的 Raydium CPMM `SwapEvent`；
+- 从事件读取交易前 Input/Output Vault 储备，储备与 Swap 位于同一交易 Slot；
+- 从实际 InputAmount、TradeFee 和 CreatorFee 唯一反推整数 Basis Points；
+- 只有 `base_input=true`、Creator Fee 位于 Input、费率可唯一反推时才标记手续费证据可用；
+- Token-2022、Transfer Fee、非唯一费率和未知方向不会被猜测为可用报价；
+- Pool 投影保存 Creator、AMM Config 和 Token Program 元数据。
+
+### 自动风险链路
+
+```text
+Finalized CPMM Swap
+→ Same-slot Vault/Fee Evidence
+→ Authority/Holder Evidence
+→ Sell Quote + Entry Impact Probe
+→ Theme/Risk Evaluation
+→ Append-only Persistence
+→ Candidate Latest Assessment
+→ Radar Explanation
+```
+
+- Sell/Entry Probe 默认使用对应储备的 `100 bps`（1%），可配置但必须在 1–10000 bps；
+- Confirmed 事件不触发正式评估，升级 Finalized 后重新入队；
+- Formal Run 要求 Slot 已 Reconciled，否则进入可重试失败；
+- Authority/Holder RPC 临时不可用沿用 Raw Event Retry/Dead Letter；
+- Attempted、Completed、Deferred、Unsupported 已提供运行计数器；
+- RiskAssessment 保存完整 RiskEvidence JSON，支持审计和回放。
+
+### 验证
+
+- 固定主网 Fixture 验证 Vault 储备、Token Program 和 25 bps 手续费证据；
+- 自动链路测试覆盖反向 Mint 方向、1% Probe、Finalized Gate 和持久化；
+- Migration 006 已在 Docker PostgreSQL 16 执行；
+- PostgreSQL 集成测试覆盖 Finality 重入队、Reconciled Context、Evidence JSON 和 Radar 关联。
+
 ## 当前安全边界
 
-系统已经具备证据组件，但尚未完成以下生产闭环：
+代码链路已经闭合，但尚未完成真实运行验收：
 
-- 从正式采集链路生成同 Slot 的 Pool State/Vault Reserve Snapshot；
-- 在 Worker 中使用可信 Pool Snapshot 触发 Evidence Collector 与 Assessment Service；
 - 使用真实 Solana RPC 对 Authority/Holder 结果进行现场比对；
+- 在连续主网数据中核对 SwapEvent 储备、费率和实际 Vault Balance；
 - 对连续采集期间的评估延迟、失败重试和覆盖率进行验收。
 
 因此当前 Sell Quote 组件只接受可信的 Pool Snapshot 输入，不能宣称已形成可执行的真实链上报价。缺失证据仍会得到 Missing + Hard Reject，调用方不能伪造证据把候选送入策略。
 
 ## 下一增量
 
-M3D 将实现：
+M3 Exit Gate / M3E 将执行：
 
-- 从正式 Pool State/Vault 数据生成同 Slot Snapshot；
-- Worker 串联 RiskEvidenceCollector、IntelligenceAssessmentService 和 Candidate；
-- 证据采集失败重试与运行指标；
-- 使用真实 Solana RPC 进行 Authority、Holder 和 Sell Quote 对照验收。
+- 配置付费主 RPC 和独立备用 RPC；
+- 连续运行并核对 Authority、Holder、Vault 和 Quote；
+- 统计 Completed/Deferred/Unsupported 覆盖率；
+- 确认 Hard Reject、Retry 和 Dead Letter 符合预期；
+- 通过后进入 M4 Early Momentum Strategy 和 Historical Replay。
 
-在 M3D 完成前，系统可以保存和查询可信输入产生的评估，但不能宣称已自动形成真实链上风险闭环。
+在 M3E 通过前，系统不能宣称已完成生产级真实链上风险闭环，也不能进入真实交易。

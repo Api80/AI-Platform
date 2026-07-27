@@ -110,6 +110,8 @@ public sealed class RiskConfiguration
 
     public int? MaximumAllowedRiskScore { get; init; }
 
+    public int SellQuoteProbeReserveBasisPoints { get; init; } = 100;
+
     public HardRejectConfiguration HardReject { get; init; } = new();
 }
 

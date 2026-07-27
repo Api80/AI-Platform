@@ -165,6 +165,13 @@ public static class MvpConfigurationValidator
                 "Phase 1 risk score range must be 0 through 100."));
         }
 
+        if (configuration.Risk.SellQuoteProbeReserveBasisPoints is < 1 or > 10_000)
+        {
+            errors.Add(new ConfigurationError(
+                "risk.sellQuoteProbeReserveBasisPoints",
+                "Sell quote probe reserve basis points must be between 1 and 10000."));
+        }
+
         if (configuration.Risk.MaximumAllowedRiskScore is < 0 or > 100)
         {
             errors.Add(new ConfigurationError(

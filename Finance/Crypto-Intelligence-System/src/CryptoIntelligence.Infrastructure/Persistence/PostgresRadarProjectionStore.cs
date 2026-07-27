@@ -80,6 +80,10 @@ public sealed class PostgresRadarProjectionStore(
                 CreatedTime = pool.CreatedTime,
                 BaseReserve = pool.BaseReserve,
                 QuoteReserve = pool.QuoteReserve,
+                CreatorAddress = pool.CreatorAddress,
+                AmmConfigAddress = pool.AmmConfigAddress,
+                BaseTokenProgramId = pool.BaseTokenProgramId,
+                QuoteTokenProgramId = pool.QuoteTokenProgramId,
                 LifecycleStatus = pool.Status,
                 FirstObservedTime = pool.CreatedTime,
                 UpdatedTime = pool.CreatedTime
@@ -98,6 +102,10 @@ public sealed class PostgresRadarProjectionStore(
                 entity.LifecycleStatus = pool.Status;
             }
 
+            entity.CreatorAddress ??= pool.CreatorAddress;
+            entity.AmmConfigAddress ??= pool.AmmConfigAddress;
+            entity.BaseTokenProgramId ??= pool.BaseTokenProgramId;
+            entity.QuoteTokenProgramId ??= pool.QuoteTokenProgramId;
             entity.UpdatedTime = Max(entity.UpdatedTime, pool.CreatedTime);
         }
 
